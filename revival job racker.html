@@ -1,0 +1,3173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Revival Marine Care — Job Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f7f6f3;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);--text:#1a1a18;--text2:#6b6b62;--text3:#9b9b90;--green:#1d9e75;--green-bg:#e8f7f1;--green-light:#d0f0e4;--green-text:#0f6e56;--red:#e24b4a;--red-bg:#fdf0f0;--red-text:#a32d2d;--amber:#ba7517;--amber-bg:#fdf3e0;--blue:#185fa5;--blue-bg:#e8f1fb;--purple:#534ab7;--radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);min-height:100vh;padding-bottom:60px}
+.app-header{background:var(--text);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-logo{font-size:13px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.9)}
+.app-logo span{opacity:.3;margin:0 6px}
+.tab-nav{background:var(--text);display:flex;padding:0 20px;border-top:1px solid rgba(255,255,255,.07)}
+.tab-btn{flex:1;padding:10px 0;font-size:13px;font-weight:500;color:rgba(255,255,255,.4);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.02em;transition:color .15s,border-color .15s}
+.tab-btn.active{color:#fff;border-bottom-color:#fff}
+.container{max-width:560px;margin:0 auto;padding:20px 16px}
+.tab-view{display:none}.tab-view.active{display:block}
+
+/* CARDS & LAYOUT */
+.section-head{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin:16px 0 8px}
+.section-head:first-child{margin-top:0}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;line-height:1.6}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .12s,transform .1s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}.btn-primary:hover{background:#333;color:#fff}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}.btn-green:hover{background:var(--green-text);color:#fff}
+.btn-danger{color:var(--red);border-color:rgba(226,75,74,.25)}.btn-danger:hover{background:var(--red-bg)}
+.btn-amber{background:var(--amber-bg);color:var(--amber);border-color:rgba(186,117,23,.25)}.btn-amber:hover{background:#f5e3c0}
+.btn-sm{padding:7px 12px;font-size:13px}
+.btn-block{width:100%;margin-bottom:8px}
+
+/* JOB LIST */
+.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.job-card:hover{border-color:var(--border2)}
+.job-card-inner{padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.job-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.job-info{flex:1;min-width:0}
+.job-name{font-size:15px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job-meta{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+.job-progress-txt{font-size:11px;font-weight:600;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px}
+.job-prog-mini{background:var(--surface2);border-radius:999px;height:3px;overflow:hidden;margin-top:5px}
+.job-prog-mini-fill{height:3px;border-radius:999px;background:var(--green);transition:width .3s}
+.job-arrow{font-size:18px;color:var(--text3);flex-shrink:0;margin-top:4px}
+
+/* STATUS PILLS */
+.pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle}
+.pill-active{background:var(--blue-bg);color:var(--blue)}
+.pill-progress{background:var(--amber-bg);color:var(--amber)}
+.pill-complete{background:var(--green-bg);color:var(--green-text)}
+.pill-scope{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+
+/* JOB HEADER */
+.job-header-card{background:var(--text);border-radius:var(--radius);padding:16px;margin-bottom:14px;color:#fff}
+.job-header-title{font-size:18px;font-weight:600;margin-bottom:3px}
+.job-header-sub{font-size:13px;opacity:.6}
+.job-header-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.jbadge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);letter-spacing:.03em}
+.job-prog-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+.job-prog-track{flex:1;background:rgba(255,255,255,.2);border-radius:999px;height:5px;overflow:hidden}
+.job-prog-fill{height:5px;border-radius:999px;background:#fff;transition:width .3s}
+.job-prog-label{font-size:12px;font-weight:500;opacity:.8;white-space:nowrap;font-family:'DM Mono',monospace}
+
+/* STEP CHECKLIST */
+.step-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.step-group-header{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.step-group-name{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2)}
+.step-group-count{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.step-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative}
+.step-item:last-child{border-bottom:none}
+.step-item:active{background:var(--surface2)}
+.step-item.done .step-label{color:var(--text3);text-decoration:line-through;text-decoration-color:var(--border2)}
+.step-item.done .step-product{opacity:.35}
+.step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;margin-top:0px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text3);background:var(--surface);transition:background .15s,border-color .15s;font-family:'DM Mono',monospace}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#fff}
+.step-body{flex:1;min-width:0}
+.step-label{font-size:14px;line-height:1.45;color:var(--text)}
+.step-product{font-size:11px;color:var(--blue);margin-top:2px;font-style:italic}
+.step-custom-tag{font-size:10px;font-weight:600;color:var(--amber);background:var(--amber-bg);padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.step-delete-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;border:none;background:none;color:var(--text3);font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.step-item:hover .step-delete-btn{display:flex}
+.step-delete-btn:hover{color:var(--red);background:var(--red-bg)}
+
+/* POST INSPECTION */
+.inspect-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative}
+.inspect-item:last-child{border-bottom:none}
+.inspect-item:active{background:var(--surface2)}
+.inspect-item.done .inspect-label{color:var(--text3);text-decoration:line-through;text-decoration-color:var(--border2)}
+.icb{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:var(--surface);transition:background .15s,border-color .15s}
+.inspect-item.done .icb{background:var(--green);border-color:var(--green)}
+.icb-check{display:none}.inspect-item.done .icb-check{display:block}
+.inspect-label{font-size:13px;line-height:1.45;color:var(--text);flex:1}
+.inspect-delete-btn{width:24px;height:24px;border-radius:50%;border:none;background:none;color:var(--text3);font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.inspect-item:hover .inspect-delete-btn{display:flex}
+.inspect-delete-btn:hover{color:var(--red);background:var(--red-bg)}
+
+/* ADD CUSTOM ITEM */
+.add-item-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface2)}
+.add-item-input{flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none}
+.add-item-input:focus{border-color:var(--text)}
+.add-item-btn{padding:8px 12px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.add-item-btn:hover{background:#333}
+
+/* COMPLETE BANNER */
+.complete-banner{background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:none}
+.complete-banner.show{display:block}
+.complete-banner-title{font-size:15px;font-weight:600;color:var(--green-text);margin-bottom:3px}
+.complete-banner-sub{font-size:13px;color:var(--green-text);opacity:.8}
+
+/* FORM ELEMENTS */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:6px}
+.form-input{width:100%;padding:10px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none}
+.form-input:focus{border-color:var(--text)}
+.form-select{width:100%;padding:10px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b62' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-select:focus{border-color:var(--text)}
+.pkg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pkg-option{border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:border-color .12s,background .12s;text-align:center}
+.pkg-option:hover{background:var(--surface2)}
+.pkg-option.selected{border-color:var(--text);background:var(--text);color:#fff}
+.pkg-option-name{font-size:13px;font-weight:500}
+.pkg-option-level{font-size:11px;opacity:.65;margin-top:2px}
+.scope-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.scope-option{border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 8px;cursor:pointer;text-align:center;transition:border-color .12s,background .12s}
+.scope-option:hover{background:var(--surface2)}
+.scope-option.selected{border-color:var(--text);background:var(--text);color:#fff}
+.scope-option-name{font-size:13px;font-weight:500}
+.scope-option-sub{font-size:10px;opacity:.65;margin-top:2px}
+.wax-toggle-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:var(--surface);transition:border-color .12s,background .12s}
+.wax-cb{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface);transition:background .15s,border-color .15s}
+.wax-cb.on{background:var(--green);border-color:var(--green)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.25);margin:auto}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.modal-btns button{flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
+.modal-btns button.save{background:var(--text);color:#fff;border-color:var(--text)}
+
+/* DAILY CHECKLIST */
+.date-bar{display:flex;gap:10px;margin-bottom:18px}
+.date-bar input{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;flex:1}
+.date-bar input[type=text]{flex:2}
+.progress-card{background:var(--surface);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.progress-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.progress-count{font-size:24px;font-weight:600;font-family:'DM Mono',monospace}
+.progress-count span{font-size:14px;font-weight:400;color:var(--text2)}
+.progress-label{font-size:12px;color:var(--text3);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.progress-track{background:var(--surface2);border-radius:999px;height:5px;overflow:hidden}
+.progress-fill{height:5px;border-radius:999px;background:var(--green);transition:width .3s}
+.dl-complete-banner{display:none;background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius-sm);padding:10px 14px;margin-top:10px;font-size:13px;font-weight:500;color:var(--green-text)}
+.dl-complete-banner.show{display:block}
+.chk-section{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.chk-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.chk-sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.chk-sname{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2)}
+.chk-scount{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.chk-item{display:flex;align-items:flex-start;gap:13px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.chk-item:last-child{border-bottom:none}
+.chk-item:active{background:var(--surface2)}
+.chk-item.done .chk-label{color:var(--text3);text-decoration:line-through;text-decoration-color:var(--border2)}
+.chk-item.done .chk-note{opacity:.4}
+.chk-cb{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:var(--surface);transition:background .15s,border-color .15s}
+.chk-item.done .chk-cb{background:var(--green);border-color:var(--green)}
+.chk-cbcheck{display:none}.chk-item.done .chk-cbcheck{display:block}
+.chk-body{flex:1;min-width:0}
+.chk-label{font-size:14px;line-height:1.45;color:var(--text)}
+.chk-note{font-size:12px;color:var(--text3);margin-top:3px;line-height:1.4}
+.item-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+.tag-req{background:var(--red-bg);color:var(--red-text)}
+.tag-fri{background:var(--amber-bg);color:var(--amber)}
+.notes-section{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.notes-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.notes-textarea{width:100%;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);resize:vertical;min-height:68px;outline:none;line-height:1.5}
+.notes-textarea:focus{border-color:var(--text);background:var(--surface)}
+.gen-btn{width:100%;padding:15px;background:var(--text);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:10px}
+.gen-btn:hover{background:#333}.gen-btn:active{transform:scale(.99)}
+.reset-btn{width:100%;padding:11px;background:transparent;color:var(--text3);border:1px solid var(--border2);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:background .12s;margin-bottom:16px}
+.reset-btn:hover{background:var(--surface2);color:var(--text2)}
+.out-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px;display:none;margin-bottom:10px}
+.out-card.visible{display:block}
+.out-pre{font-family:'DM Mono',monospace;font-size:12px;line-height:1.85;white-space:pre-wrap;color:var(--text);word-break:break-word}
+.copy-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;display:none;margin-bottom:16px}
+.copy-btn.visible{display:block}.copy-btn:hover{background:var(--green-text)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.footer{text-align:center;font-size:11px;color:var(--text3);margin-top:24px;letter-spacing:.03em}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0}
+.back-btn:hover{color:var(--text)}
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:340px;box-shadow:var(--shadow)}
+.login-logo{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:20px}
+.login-title{font-size:20px;font-weight:600;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;display:none}
+
+/* HEADER USER PILL */
+.user-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border-radius:999px;padding:4px 10px 4px 6px;cursor:pointer;transition:background .15s}
+.user-pill:hover{background:rgba(255,255,255,.2)}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500;color:rgba(255,255,255,.85)}
+
+/* AUDIT BADGE on checklist items */
+.audit-badge{font-size:10px;color:var(--green-text);background:var(--green-bg);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+
+/* SETTINGS TAB */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.settings-section-hdr{padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)}
+.settings-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{flex:1;font-size:14px;color:var(--text)}
+.settings-row-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.account-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.account-role{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:4px}
+.role-admin{background:var(--purple);color:#fff;opacity:.85}
+.role-crew{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+
+/* TEMPLATE EDITOR */
+.tmpl-pkg-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.tmpl-pkg-btn{border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px;cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:var(--text);background:var(--surface);transition:border-color .12s,background .12s}
+.tmpl-pkg-btn:hover{background:var(--surface2)}
+.tmpl-pkg-btn.active{border-color:var(--text);background:var(--text);color:#fff}
+.tmpl-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.tmpl-group-hdr{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;justify-content:space-between}
+.tmpl-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);touch-action:none}
+.tmpl-item:last-child{border-bottom:none}
+.tmpl-item.dragging{opacity:.4;background:var(--surface2)}
+.tmpl-item.drag-over{border-top:2px solid var(--blue)}
+.drag-handle{color:var(--text3);font-size:16px;cursor:grab;flex-shrink:0;padding:0 2px;user-select:none;line-height:1}
+.drag-handle:active{cursor:grabbing}
+.tmpl-item-text{flex:1;min-width:0}
+.tmpl-item-label{font-size:13px;color:var(--text);line-height:1.4}
+.tmpl-item-product{font-size:11px;color:var(--blue);margin-top:2px;font-style:italic}
+.tmpl-item-del{width:24px;height:24px;border:none;background:none;color:var(--text3);font-size:16px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tmpl-item-del:hover{color:var(--red);background:var(--red-bg)}
+.tmpl-add-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface2)}
+.tmpl-add-input{flex:1;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none}
+.tmpl-add-btn{padding:7px 12px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+
+/* DROPDOWN MENU */
+.dropdown-wrap{position:relative}
+.dropdown-menu{position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:160px;z-index:150;overflow:hidden;display:none}
+.dropdown-menu.open{display:block}
+.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:14px;color:var(--text);cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.dropdown-item:last-child{border-bottom:none}
+.dropdown-item:hover{background:var(--surface2)}
+.dropdown-item-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+
+/* CALENDAR */
+.cal-tabs{display:flex;gap:0;background:var(--surface2);border-radius:var(--radius-sm);padding:3px;margin-bottom:16px}
+.cal-tab{flex:1;padding:7px 0;text-align:center;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-radius:var(--radius-sm);transition:background .15s,color .15s}
+.cal-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.cal-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-month-label{font-size:17px;font-weight:600}
+.cal-nav-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.cal-nav-btn:hover{background:var(--surface2)}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
+.cal-dow-cell{text-align:center;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;position:relative}
+.cal-cell{min-height:72px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);padding:4px;position:relative;vertical-align:top}
+.cal-cell.other-month{background:var(--surface2);opacity:.5}
+.cal-cell.today{border-color:var(--text);border-width:2px}
+.cal-date-num{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:3px}
+.cal-cell.today .cal-date-num{color:var(--text);background:var(--text);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.cal-event{border-radius:3px;padding:2px 5px;font-size:10px;font-weight:600;color:#fff;margin-bottom:2px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
+.cal-event.continues-right{border-radius:3px 0 0 3px;margin-right:-2px}
+.cal-event.continues-left{border-radius:0 3px 3px 0;margin-left:-2px}
+.cal-event.continues-both{border-radius:0;margin-left:-2px;margin-right:-2px}
+.pkg-color-ww{background:#185fa5}
+.pkg-color-bs{background:#1d9e75}
+.pkg-color-rp{background:#534ab7}
+
+/* JOB DETAIL MODAL (calendar click) */
+.cal-job-popup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:12px;box-shadow:var(--shadow);display:none}
+.cal-job-popup.open{display:block}
+
+/* ESTIMATOR */
+.est-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.est-card-hdr{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2)}
+.est-body{padding:14px 16px}
+.est-line{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px}
+.est-line:last-child{border-bottom:none}
+.est-line-label{color:var(--text2);font-size:13px}
+.est-line-val{font-weight:600;color:var(--text);font-family:'DM Mono',monospace}
+.est-total-line{display:flex;align-items:baseline;justify-content:space-between;padding:12px 0 4px;font-size:16px;font-weight:700}
+.est-total-line .est-line-val{color:var(--green);font-size:18px}
+.est-range-line{display:flex;align-items:baseline;justify-content:space-between;padding:4px 0 8px;font-size:12px;color:var(--text3)}
+
+/* PROFILE EDIT */
+.color-swatch-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}
+.color-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .15s}
+.color-swatch.selected{border-color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Revival Marine Care</div>
+    <div class="login-title">Sign in</div>
+    <div class="login-sub">Enter your name and PIN to continue.</div>
+    <div class="form-group">
+      <label class="form-label">Select account</label>
+      <select class="form-select" id="login-user-select">
+        <option value="">Choose account...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PIN</label>
+      <input class="form-input" type="password" id="login-pin" placeholder="Enter your PIN" inputmode="numeric" maxlength="6"/>
+    </div>
+    <div class="login-err" id="login-err">Incorrect PIN. Try again.</div>
+    <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="app-logo">Revival Marine<span>·</span>Job Tracker</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:5px">
+      <div id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#ba7517;flex-shrink:0"></div>
+      <div id="sync-label" style="font-size:11px;color:rgba(255,255,255,.5);font-weight:500">Syncing...</div>
+    </div>
+    <div class="dropdown-wrap" id="user-dropdown-wrap">
+      <div class="user-pill" onclick="toggleUserDropdown()">
+        <div class="user-avatar" id="header-avatar">?</div>
+        <div class="user-name" id="header-name">Sign in</div>
+        <span style="font-size:10px;opacity:.6;margin-left:2px">▾</span>
+      </div>
+      <div class="dropdown-menu" id="user-dropdown-menu">
+        <div class="dropdown-item" onclick="openProfileEdit()"><span class="dropdown-item-icon">👤</span>Edit profile</div>
+        <div class="dropdown-item" onclick="goToSettings()"><span class="dropdown-item-icon">⚙</span>Settings</div>
+        <div class="dropdown-item" style="color:var(--red)" onclick="doSignOut()"><span class="dropdown-item-icon">↩</span>Sign out</div>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('jobs',this)">Jobs</button>
+  <button class="tab-btn" onclick="switchTab('calendar',this)">Calendar</button>
+  <button class="tab-btn" id="tab-btn-estimate" onclick="switchTab('estimate',this)">Estimate</button>
+</div>
+
+<div class="container">
+
+  <!-- JOBS TAB -->
+  <div class="tab-view active" id="tab-jobs">
+    <div id="jobs-list-view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:18px;font-weight:600">Active jobs</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px" id="jobs-subtitle">0 jobs in progress</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJobModal()">+ New job</button>
+      </div>
+      <div id="active-jobs-list"></div>
+      <div class="section-head" id="completed-head" style="display:none">Completed</div>
+      <div id="completed-jobs-list"></div>
+    </div>
+
+    <div id="job-detail-view" style="display:none">
+      <button class="back-btn" onclick="closeJobDetail()">&#8592; All jobs</button>
+      <div class="job-header-card" id="job-detail-header"></div>
+      <div class="complete-banner" id="job-complete-banner">
+        <div class="complete-banner-title">Detail complete!</div>
+        <div class="complete-banner-sub">All steps and post-inspection items done. Ready for client delivery.</div>
+      </div>
+      <div id="job-action-row" style="display:flex;gap:8px;margin-bottom:14px"></div>
+      <div id="job-detail-checklist"></div>
+    </div>
+  </div>
+
+  <!-- ESTIMATE TAB (admin only) -->
+  <div class="tab-view" id="tab-estimate">
+    <div id="est-admin-only" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:18px;font-weight:600">Quote Builder</div>
+        <button class="btn btn-sm" onclick="resetEstimator()">Clear</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Build a quote, then book it straight to the calendar.</div>
+
+      <!-- Client & Boat -->
+      <div class="est-card">
+        <div class="est-card-hdr">Client & Boat</div>
+        <div class="est-body">
+          <div class="form-group">
+            <label class="form-label">Client name</label>
+            <input class="form-input" id="est-client" placeholder="e.g. Johnson" oninput="calcEstimate()"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year, Make & Model</label>
+            <input class="form-input" id="est-ymm" placeholder="e.g. 2019 Grady-White Canyon 306" oninput="calcEstimate()"/>
+          </div>
+          <div class="form-group">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <label class="form-label">Boat size (ft)</label>
+                <input class="form-input" id="est-size" type="number" min="15" max="120" placeholder="e.g. 43" oninput="calcEstimate()"/>
+              </div>
+              <div>
+                <label class="form-label">Boat type</label>
+                <select class="form-select" id="est-boat-type" onchange="calcEstimate()">
+                  <option value="cc">Center / Dual Console</option>
+                  <option value="bay">Bay Boat</option>
+                  <option value="cat">Catamaran</option>
+                  <option value="cat">Walk-Around</option>
+                  <option value="cat">Sport Fisher</option>
+                  <option value="cat">Cruiser</option>
+                  <option value="cc">Sailboat</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vessel scope</label>
+            <div class="scope-grid">
+              <div class="scope-option" data-scope="full" onclick="estSelectScope('full')"><div class="scope-option-name">Full Vessel</div><div class="scope-option-sub">Top + Hull</div></div>
+              <div class="scope-option" data-scope="topside" onclick="estSelectScope('topside')"><div class="scope-option-name">Topside Only</div><div class="scope-option-sub">65% of full</div></div>
+              <div class="scope-option" data-scope="hull" onclick="estSelectScope('hull')"><div class="scope-option-name">Hull Only</div><div class="scope-option-sub">35% of full / rate−$15/ft 35-45ft</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Package -->
+      <div class="est-card">
+        <div class="est-card-hdr">Package</div>
+        <div class="est-body">
+          <div class="pkg-grid" id="est-pkg-grid"></div>
+          <!-- RP L3 range slider -->
+          <div id="est-rp3-range" style="display:none;margin-top:14px">
+            <label class="form-label">RP L3 rate: $<span id="est-rp3-val">200</span>/ft</label>
+            <input type="range" id="est-rp3-slider" min="200" max="350" step="5" value="200" style="width:100%;margin-top:6px;accent-color:var(--purple)" oninput="document.getElementById('est-rp3-val').textContent=this.value;calcEstimate()"/>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:2px"><span>$200</span><span>$350</span></div>
+          </div>
+          <!-- Wax addon (BS only) -->
+          <div id="est-wax-group" style="display:none;margin-top:14px">
+            <div class="wax-toggle-row" onclick="estToggleWax()">
+              <div class="wax-cb" id="est-wax-cb"></div>
+              <div>
+                <div style="font-size:14px;font-weight:500">Add Premium Boat Wax (+$15/ft)</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:2px">Applied after Ceramic Spray — Topside, Hull & Cowlings</div>
+              </div>
+            </div>
+          </div>
+          <!-- RP add-ons -->
+          <div id="est-rp-addons" style="display:none;margin-top:14px">
+            <div class="form-label" style="margin-bottom:8px">Add-ons (optional)</div>
+            <div class="wax-toggle-row" style="margin-bottom:8px" onclick="estToggleAddon('ceramic-gc')">
+              <div class="wax-cb" id="est-addon-ceramic-gc-cb"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Ceramic Smooth Gel Coat</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:1px" id="est-addon-ceramic-gc-price">L1: $65/ft · L2: $75/ft · L3: $85/ft</div>
+              </div>
+            </div>
+            <div class="wax-toggle-row" onclick="estToggleAddon('nonskid')">
+              <div class="wax-cb" id="est-addon-nonskid-cb"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Non-Skid Ceramic</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:1px" id="est-addon-nonskid-price">L1: $45/ft · L2: $50/ft · L3: $65/ft</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Breakdown (live) -->
+      <div class="est-card" id="est-result-card" style="display:none">
+        <div class="est-card-hdr" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Quote</span>
+          <span id="est-total-badge" style="font-size:15px;font-weight:700;color:var(--green)"></span>
+        </div>
+        <div class="est-body" id="est-breakdown"></div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px">
+          <button class="btn btn-sm" style="flex:1" onclick="copyEstimate()">📋 Copy quote</button>
+          <button class="btn btn-green" style="flex:1;font-weight:600" onclick="bookJobFromEstimate()">📅 Book job</button>
+        </div>
+      </div>
+
+      <div class="footer" style="margin-top:20px">Revival Marine Care &nbsp;·&nbsp; Quote Builder — Admin Only</div>
+    </div>
+    <div id="est-no-access" style="display:none;text-align:center;padding:60px 20px">
+      <div style="font-size:32px;margin-bottom:12px">🔒</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:6px">Admin access required</div>
+      <div style="font-size:13px;color:var(--text2)">The quote builder is visible to admin accounts only.</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-view" id="tab-settings">
+
+    <!-- ACCOUNTS -->
+    <div class="section-head">Accounts</div>
+    <div class="settings-section">
+      <div class="settings-section-hdr">Team members</div>
+      <div id="accounts-list"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="openAddAccountModal()">+ Add team member</button>
+    <button class="btn btn-block" style="color:var(--red);border-color:rgba(226,75,74,.25);margin-top:4px" onclick="doSignOut()">Sign out</button>
+
+    <!-- PACKAGE TEMPLATES -->
+    <div class="section-head" style="margin-top:20px">Package templates</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">Edit any package template below. Changes apply to new jobs only — existing jobs are not affected.</div>
+    <div class="tmpl-pkg-select" id="tmpl-pkg-select"></div>
+    <div id="tmpl-editor"></div>
+
+  </div><!-- end tab-settings -->
+
+  <!-- CALENDAR TAB -->
+  <div class="tab-view" id="tab-calendar">
+
+    <!-- BOOKING BANNER — shown when coming from estimator -->
+    <div id="cal-booking-banner" style="display:none;background:#1d9e75;color:#fff;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📅 Tap a date to book this job</div>
+      <div id="cal-booking-name" style="font-size:15px;font-weight:600;margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:500">Duration:</div>
+        <select id="cal-booking-duration" style="padding:6px 10px;border-radius:8px;border:none;font-size:13px;font-weight:600;background:rgba(255,255,255,0.25);color:#fff;cursor:pointer">
+          <option value="0.5">Half day</option>
+          <option value="1" selected>1 day</option>
+          <option value="2">2 days</option>
+          <option value="3">3 days</option>
+          <option value="4">4 days</option>
+          <option value="5">5 days</option>
+          <option value="6">6 days</option>
+          <option value="7">7 days</option>
+        </select>
+        <button onclick="calCancelBooking()" style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;border-radius:8px;color:#fff;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">✕ Cancel</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;gap:6px">
+        <div id="cal-view-list" onclick="calShowView('list')" style="padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;background:var(--text);color:#fff">List</div>
+        <div id="cal-view-month" onclick="calShowView('month')" style="padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--text2)">Month</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openJobModal()">+ New job</button>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="cal-list-view">
+      <div id="cal-jobs-list"></div>
+    </div>
+
+    <!-- MONTH VIEW -->
+    <div id="cal-month-view" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button onclick="calPrevMonth()" style="background:var(--surface2);border:none;border-radius:8px;width:32px;height:32px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)">‹</button>
+        <div id="cal-month-label" style="font-size:17px;font-weight:600"></div>
+        <button onclick="calNextMonth()" style="background:var(--surface2);border:none;border-radius:8px;width:32px;height:32px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">SUN</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">MON</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">TUE</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">WED</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">THU</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">FRI</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px 0;letter-spacing:.05em">SAT</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+      <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#185fa5;flex-shrink:0"></div>Wash & Wax</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#1d9e75;flex-shrink:0"></div>Buff & Shine</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#534ab7;flex-shrink:0"></div>Revival Package</div>
+      </div>
+      <!-- Job popup -->
+      <div id="cal-job-popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px;box-shadow:var(--shadow)"></div>
+    </div><!-- end cal-month-view -->
+  </div><!-- end tab-calendar -->
+
+</div><!-- end container -->
+
+<!-- JOB MODAL (new + edit) -->
+<div class="modal-overlay" id="job-modal">
+  <div class="modal">
+    <h3 id="job-modal-title">New job</h3>
+    <div class="form-group">
+      <label class="form-label">Client name</label>
+      <input class="form-input" id="jm-client" placeholder="e.g. Smith, Johnson"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Boat</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input class="form-input" id="jm-boat-size" placeholder="Size (e.g. 43ft)"/>
+        <input class="form-input" id="jm-boat-type" placeholder="Type (e.g. Freeman)"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vessel scope</label>
+      <div class="scope-grid">
+        <div class="scope-option" data-scope="full" onclick="selectScope('full')">
+          <div class="scope-option-name">Full Vessel</div>
+          <div class="scope-option-sub">Topside + Hull</div>
+        </div>
+        <div class="scope-option" data-scope="topside" onclick="selectScope('topside')">
+          <div class="scope-option-name">Topside Only</div>
+          <div class="scope-option-sub">No hull work</div>
+        </div>
+        <div class="scope-option" data-scope="hull" onclick="selectScope('hull')">
+          <div class="scope-option-name">Hull Only</div>
+          <div class="scope-option-sub">No topside work</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Package</label>
+      <div class="pkg-grid" id="jm-pkg-grid"></div>
+    </div>
+    <div class="form-group" id="jm-wax-group" style="display:none">
+      <label class="form-label">Wax add-on (+$15/ft)</label>
+      <div class="wax-toggle-row" onclick="toggleWax()">
+        <div class="wax-cb" id="jm-wax-cb"></div>
+        <div>
+          <div style="font-size:14px;font-weight:500">Add Premium Boat Wax</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">Revival Premium Boat Wax applied after Ceramic Spray — Topside, Hull &amp; Cowlings</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Start date</label>
+      <input class="form-input" type="date" id="jm-date"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Duration (days)</label>
+      <select class="form-select" id="jm-duration">
+        <option value="0.5">Half day</option>
+        <option value="1" selected>1 day</option>
+        <option value="1.5">1.5 days</option>
+        <option value="2">2 days</option>
+        <option value="2.5">2.5 days</option>
+        <option value="3">3 days</option>
+        <option value="3.5">3.5 days</option>
+        <option value="4">4 days</option>
+        <option value="4.5">4.5 days</option>
+        <option value="5">5 days</option>
+        <option value="6">6 days</option>
+        <option value="7">7 days</option>
+      </select>
+    </div>
+    <div class="form-group" id="jm-crew-group">
+      <label class="form-label">Assign to crew</label>
+      <div id="jm-crew-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeJobModal()">Cancel</button>
+      <button class="save" onclick="saveJob()">Save job</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE EDIT MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <h3>Edit profile</h3>
+    <div class="form-group">
+      <label class="form-label">Full name</label>
+      <input class="form-input" id="pm-name" placeholder="Your full name"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">New PIN (leave blank to keep current)</label>
+      <input class="form-input" type="password" id="pm-pin" placeholder="New PIN" inputmode="numeric" maxlength="6"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Avatar color</label>
+      <div class="color-swatch-grid" id="pm-color-grid"></div>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeProfileModal()">Cancel</button>
+      <button class="save" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ACCOUNT MODAL -->
+<div class="modal-overlay" id="add-account-modal">
+  <div class="modal">
+    <h3>Add team member</h3>
+    <div class="form-group">
+      <label class="form-label">Full name</label>
+      <input class="form-input" id="aa-name" placeholder="e.g. Cole Thompson"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-select" id="aa-role">
+        <option value="admin">Admin (Drake / Caroline — can edit templates & accounts)</option>
+        <option value="crew">Crew (can check jobs & daily checklist)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PIN (4–6 digits)</label>
+      <input class="form-input" type="password" id="aa-pin" placeholder="Create a PIN" inputmode="numeric" maxlength="6"/>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeAddAccountModal()">Cancel</button>
+      <button class="save" onclick="saveNewAccount()">Add account</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// PACKAGE DATA — scope-aware (T=topside, H=hull, F=full)
+// scope tags: 'full'|'topside'|'hull'|'all' (all = always shown)
+// ════════════════════════════════════════════════════════
+
+function pkg(name, level, short, color, steps) {
+  return {name, level, short, color, steps};
+}
+
+// Each step item can have scope: 'all'|'topside'|'hull'|'full'
+// 'all' = shown regardless. 'topside'/'hull' = scope-specific. 'full' = only when full vessel.
+// Default (no scope) = 'all'
+
+const PACKAGES = {
+
+'WW-1': pkg('Wash & Wax','Level 1','WW L1','#378add',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 1 — Dry & Interior', scope:'topside', items:[
+    {label:'Dry Topside & Windows/Isinglass', product:'Towels/Chamois; Blower if needed'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 2 — Protection: Topside', scope:'topside', items:[
+    {label:'Protect Metal — Topside', product:'Revival Corrosion Blocker'},
+    {label:'Protect Vinyl Seats', product:'Revival Vinyl Guard'},
+    {label:'Wax Topside & Cowlings', product:'Revival Premium Boat Wax'},
+  ]},
+  {group:'Step 2 — Protection: Hull', scope:'hull', items:[
+    {label:'Wax Hull', product:'Revival Premium Boat Wax'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Gloss inspection under correction light — confirm even finish, no missed spots'},
+    {label:'Topside wax coverage confirmed — smooth, consistent sheen', scope:'topside'},
+    {label:'Hull wax coverage confirmed — smooth, consistent sheen, no runs or thin spots', scope:'hull'},
+    {label:'Cowlings waxed and streak free', scope:'topside'},
+    {label:'All vinyl seats — lightly cleaned, UV protectant applied evenly, no drips or residue', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned, vacuumed, no odor', scope:'topside'},
+    {label:'Non-skid / foam floors — clean, scrubbed, no soap residue, no standing water', scope:'topside'},
+    {label:'All metal (cleats, rails, towers, hardware) — corrosion blocker applied, no streaks', scope:'topside'},
+    {label:'All isinglass / glass — streak free, crystal clear', scope:'topside'},
+    {label:'All windows and screens — no water spots, no smears', scope:'topside'},
+    {label:'All plastic trim — UV protection applied, no smearing', scope:'topside'},
+    {label:'Scum line fully removed — waterline clean, no tide ring visible', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'Final wipe-down — no compound dust, lint, or fingerprints anywhere'},
+    {label:'Job site clean — no product bottles, towels, or equipment left on vessel or dock'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'WW-2': pkg('Wash & Wax','Level 2','WW L2','#378add',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 2 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Final Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 3 — Final Wash: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Cowlings — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+  ]},
+  {group:'Step 4 — Wax', scope:'all', items:[
+    {label:'Wax Topside & Cowlings', product:'Revival Premium Boat Wax', scope:'topside'},
+    {label:'Wax Hull', product:'Revival Premium Boat Wax', scope:'hull'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — no haze, swirls, or uneven polish'},
+    {label:'Polish coverage confirmed — Topside even, no buffer marks or high spots', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even, no buffer marks or high spots', scope:'hull'},
+    {label:'Cowlings polished and streak free', scope:'topside'},
+    {label:'Wax coverage confirmed — Topside smooth and consistent', scope:'topside'},
+    {label:'Wax coverage confirmed — Hull smooth, no drips or thin spots', scope:'hull'},
+    {label:'Vinyl seats — lightly cleaned, UV protectant applied evenly', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned and vacuumed', scope:'topside'},
+    {label:'Non-skid / foam floors — scrubbed clean, no soap residue', scope:'topside'},
+    {label:'All metal — corrosion blocker or UV protectant applied, no streaks', scope:'topside'},
+    {label:'All isinglass / glass — streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots', scope:'topside'},
+    {label:'All plastic trim — UV protectant applied', scope:'topside'},
+    {label:'Scum line fully removed, waterline clean', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'No compound dust or splatter remaining anywhere'},
+    {label:'Final wipe-down — no lint, fingerprints, or residue anywhere on vessel'},
+    {label:'Job site clean — no product, towels, or equipment left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'WW-3': pkg('Wash & Wax','Level 3','WW L3','#378add',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 2 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Final Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 3 — Final Wash: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Cowlings — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+  ]},
+  {group:'Step 4 — Ceramic Spray', scope:'all', items:[
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray', scope:'topside'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray', scope:'hull'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — no haze, swirls, or uneven polish'},
+    {label:'Polish coverage confirmed — Topside even, no buffer marks', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even, no buffer marks', scope:'hull'},
+    {label:'Cowlings polished and streak free', scope:'topside'},
+    {label:'Ceramic Spray applied evenly — Topside: inspect for high spots or streaks', scope:'topside'},
+    {label:'Ceramic Spray applied evenly — Hull: inspect for streaks or missed sections', scope:'hull'},
+    {label:'Vinyl seats — lightly cleaned, UV protectant applied evenly', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned and vacuumed', scope:'topside'},
+    {label:'Non-skid / foam floors — scrubbed clean, no soap residue', scope:'topside'},
+    {label:'All metal — UV protectant applied, no streaks', scope:'topside'},
+    {label:'All isinglass / glass — streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots or smears', scope:'topside'},
+    {label:'All plastic trim — UV protectant applied', scope:'topside'},
+    {label:'Scum line fully removed, waterline clean', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'No compound dust or splatter remaining anywhere'},
+    {label:'Final wipe-down — no lint, fingerprints, or residue anywhere'},
+    {label:'Job site clean — no product, towels, or equipment left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'BS-1': pkg('Buff & Shine','Level 1','BS L1','#1d9e75',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 2 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Final Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Wash Topside Gunwales, Non Skid, Compartments', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 3 — Final Wash: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Trailer — remove compound dust & splatter'},
+    {label:'Wash Hull, Cowlings, Trailer', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Hull & Trailer'},
+    {label:'Dry Hull & Cowlings'},
+  ]},
+  {group:'Step 4 — Ceramic Spray', scope:'all', items:[
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray', scope:'topside'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray', scope:'hull'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — no haze, swirls, or buffer marks'},
+    {label:'Polish coverage confirmed — Topside even, no high spots or buffer trails', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even, no high spots or buffer trails', scope:'hull'},
+    {label:'Cowlings polished and streak free', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Topside: inspect under light for even coat, no streaks', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: inspect for streaks or missed sections', scope:'hull'},
+    {label:'Vinyl seats — lightly cleaned, UV protectant applied evenly, no drips', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned and vacuumed', scope:'topside'},
+    {label:'Non-skid / foam floors — scrubbed clean, no compound residue or soap', scope:'topside'},
+    {label:'All metal hardware — UV protectant or corrosion blocker applied, streak free', scope:'topside'},
+    {label:'All isinglass / glass — streak free, no smearing', scope:'topside'},
+    {label:'All windows and screens — no water spots or smears', scope:'topside'},
+    {label:'All plastic trim — UV protectant applied evenly', scope:'topside'},
+    {label:'Scum line fully removed — waterline completely clean', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'Gunwales and topside-to-hull seam — clean, no compound splatter', scope:'topside'},
+    {label:'No compound dust or splatter anywhere on vessel or dock'},
+    {label:'Final wipe-down — no lint, fingerprints, towel fibers, or residue'},
+    {label:'Job site clean — no product bottles, dirty towels, or pads left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'BS-2': pkg('Buff & Shine','Level 2','BS L2','#1d9e75',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Heavy Cut: Topside', scope:'topside', items:[
+    {label:'Heavy Cut Topside', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 2 — Heavy Cut: Hull', scope:'hull', items:[
+    {label:'Heavy Cut Hull', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 3 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 4 — Final Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 4 — Final Wash: Hull', scope:'hull', items:[
+    {label:'Rinse Hull, Cowlings, Trailer — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+  ]},
+  {group:'Step 5 — Ceramic Spray', scope:'all', items:[
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray', scope:'topside'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray', scope:'hull'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — no haze, swirls, heavy cut marks, or buffer trails'},
+    {label:'Heavy Cut fully refined — no cut marks or scratches visible under correction light', scope:'topside'},
+    {label:'Heavy Cut fully refined — Hull no cut marks or scratches visible', scope:'hull'},
+    {label:'Polish coverage confirmed — Topside smooth, bright, even finish', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull smooth, bright, even finish', scope:'hull'},
+    {label:'Cowlings polished and streak free', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Topside: inspect under light, no streaks or missed spots', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: no streaks or missed sections', scope:'hull'},
+    {label:'Vinyl seats — lightly cleaned, UV protectant applied', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned and vacuumed', scope:'topside'},
+    {label:'Non-skid / foam floors — scrubbed clean, no compound residue', scope:'topside'},
+    {label:'All metal hardware — UV protectant applied, streak free', scope:'topside'},
+    {label:'All isinglass / glass — streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots', scope:'topside'},
+    {label:'All plastic trim — UV protectant applied', scope:'topside'},
+    {label:'Scum line fully removed — waterline clean', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'No compound dust or splatter remaining anywhere on vessel'},
+    {label:'Final wipe-down complete — no lint, fingerprints, or residue'},
+    {label:'Job site clean — no product, pads, or towels left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'BS-3': pkg('Buff & Shine','Level 3','BS L3','#1d9e75',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Light Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Light Clean Compartments, Fish Boxes, Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Heavy Cut: Topside', scope:'topside', items:[
+    {label:'Heavy Cut Topside', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 2 — Heavy Cut: Hull', scope:'hull', items:[
+    {label:'Heavy Cut Hull', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 3 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 4 — Final Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+  ]},
+  {group:'Step 4 — Final Wash: Hull', scope:'hull', items:[
+    {label:'Rinse Hull, Cowlings, Trailer — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+  ]},
+  {group:'Step 5 — Ceramic Spray', scope:'all', items:[
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray', scope:'topside'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray', scope:'hull'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — no haze, swirls, heavy cut marks, or buffer trails'},
+    {label:'Heavy Cut fully refined — no cut marks visible under correction light', scope:'topside'},
+    {label:'Heavy Cut fully refined — Hull no cut marks visible', scope:'hull'},
+    {label:'Polish coverage confirmed — Topside smooth, bright, even finish', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull smooth, bright, even finish', scope:'hull'},
+    {label:'Cowlings polished and streak free', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Topside: no streaks or missed spots', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: no streaks or missed sections', scope:'hull'},
+    {label:'Vinyl seats — lightly cleaned, UV protectant applied', scope:'topside'},
+    {label:'All compartments, fish boxes, head — lightly cleaned and vacuumed', scope:'topside'},
+    {label:'Non-skid / foam floors — scrubbed clean, no residue', scope:'topside'},
+    {label:'All metal hardware — UV protectant applied, streak free', scope:'topside'},
+    {label:'All isinglass / glass — streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots', scope:'topside'},
+    {label:'All plastic trim — UV protectant applied', scope:'topside'},
+    {label:'Scum line fully removed — waterline clean', scope:'hull'},
+    {label:'Hull rust stains fully removed', scope:'hull'},
+    {label:'No compound dust or splatter remaining anywhere on vessel'},
+    {label:'Final wipe-down complete — no lint, fingerprints, or residue'},
+    {label:'Job site clean — no product, pads, or towels left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'RP-1': pkg('Revival Package','Level 1','RP L1','#534ab7',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Remove Water Spots on GLASS (not isinglass)', product:'Revival Rust Stain Remover'},
+    {label:'Deep Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Compartments', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Fish Boxes & Bilge', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Engine Bay (if needed)', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Medium Cut: Topside', scope:'topside', items:[
+    {label:'Medium Cut Topside', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+    {label:'Medium Cut Non Skid', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 2 — Medium Cut: Hull', scope:'hull', items:[
+    {label:'Medium Cut Hull', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 3 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Isinglass (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Non Skid', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Cowlings (if applicable)', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 3 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 4 — Final Wash & Protection: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+    {label:'Deep Metal Polish — Topside', product:'Revival Corrosion Blocker / Ceramic Metal Sealant'},
+    {label:'Restore & Protect Vinyl Seats — UV & Ceramic Protection', product:'Revival Vinyl Guard'},
+    {label:'Apply Wax — Topside & Cowlings', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray'},
+    {label:'Apply Ceramic Spray — All Glass, Screens & Doors'},
+    {label:'Apply Ceramic Spray — Inside Compartments & Head'},
+  ]},
+  {group:'Step 4 — Final Wash & Protection: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Cowlings — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+    {label:'Apply Wax — Hull', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — confirm swirl-free, haze-free finish on all surfaces'},
+    {label:'Medium Cut fully refined — no yellow wool marks or compound scratches visible', scope:'topside'},
+    {label:'Medium Cut fully refined — Hull clean under correction light', scope:'hull'},
+    {label:'Polish coverage confirmed — Topside, Non Skid, Isinglass, Cowlings even and bright', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even and bright', scope:'hull'},
+    {label:'Wax confirmed — Topside: smooth, consistent sheen, no thin spots or drips', scope:'topside'},
+    {label:'Wax confirmed — Hull: smooth, consistent sheen', scope:'hull'},
+    {label:'Ceramic Spray confirmed — Topside & Cowlings: inspect under light, no streaks', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: no streaks or missed sections', scope:'hull'},
+    {label:'Ceramic Spray confirmed — All glass, screens, and doors coated', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Inside compartments and head coated', scope:'topside'},
+    {label:'All vinyl seats — deep cleaned, UV & ceramic protection applied, no drips', scope:'topside'},
+    {label:'All compartments — deep cleaned, vacuumed, odor-neutralizer applied', scope:'topside'},
+    {label:'Fish boxes — deep cleaned, scrubbed, odor-neutralized', scope:'topside'},
+    {label:'Head — deep cleaned, disinfected, odor-neutralized', scope:'topside'},
+    {label:'Non-skid — oxidation removed, UV ceramic protection applied, fully clean', scope:'topside'},
+    {label:'Bilge — cleaned, odor-neutralizer applied', scope:'topside'},
+    {label:'All metal (rails, cleats, hardware) — polished, ceramic sealant applied, no tarnish', scope:'topside'},
+    {label:'Stainless hardware — screws, cupholders, fittings cleaned and polished', scope:'topside'},
+    {label:'All isinglass / glass — clarity polished, streak free, UV protected', scope:'topside'},
+    {label:'All windows and screens — no water spots or smears', scope:'topside'},
+    {label:'All plastic trim — UV restored and protected', scope:'topside'},
+    {label:'Steering console, gauges, switch panel — detailed and UV protected', scope:'topside'},
+    {label:'Windshield track & gaskets — cleaned and conditioned', scope:'topside'},
+    {label:'Caulking & seals — cleaned and conditioned, no black mold or residue', scope:'topside'},
+    {label:'Anchor locker — rinsed and refreshed', scope:'topside'},
+    {label:'Engine bay — cosmetically cleaned, plastic protection applied', scope:'topside'},
+    {label:'Trailer (if applicable) — detailed and tire shine applied'},
+    {label:'Scum line fully removed — waterline completely clean', scope:'hull'},
+    {label:'Hull rust and stains fully removed', scope:'hull'},
+    {label:'Final "Correction Light" inspection — hold light at low angle, confirm elite finish'},
+    {label:'No compound dust, lint, fingerprints, or residue anywhere on vessel'},
+    {label:'Job site clean — no product, pads, or towels left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'RP-2': pkg('Revival Package','Level 2','RP L2','#534ab7',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Remove Water Spots on GLASS (not isinglass)', product:'Revival Rust Stain Remover'},
+    {label:'Deep Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Compartments', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Fish Boxes & Bilge', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Engine Bay (if needed)', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — 1000 Grit Dry Sand', scope:'all', items:[
+    {label:'Dry Sand Topside', product:'SunMight Film Finish Disc 1000', scope:'topside'},
+    {label:'Dry Sand Hull', product:'SunMight Film Finish Disc 1000', scope:'hull'},
+  ]},
+  {group:'Step 3 — Heavy Cut: Topside', scope:'topside', items:[
+    {label:'Heavy Cut Topside', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+    {label:'Heavy Cut Non Skid', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 3 — Heavy Cut: Hull', scope:'hull', items:[
+    {label:'Heavy Cut Hull', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 4 — Medium Cut: Topside', scope:'topside', items:[
+    {label:'Medium Cut Topside', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+    {label:'Medium Cut Non Skid', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 4 — Medium Cut: Hull', scope:'hull', items:[
+    {label:'Medium Cut Hull', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 5 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Isinglass (if applicable)'},
+    {label:'Polish Non Skid'},
+    {label:'Polish Cowlings (if applicable)'},
+  ]},
+  {group:'Step 5 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 6 — Final Wash & Protection: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+    {label:'Deep Metal Polish — Topside', product:'Revival Corrosion Blocker / Ceramic Metal Sealant'},
+    {label:'Restore & Protect Vinyl Seats', product:'Revival Vinyl Guard'},
+    {label:'Apply Wax — Topside & Cowlings', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray'},
+    {label:'Apply Ceramic Spray — All Glass, Screens & Doors'},
+    {label:'Apply Ceramic Spray — Inside Compartments & Head'},
+  ]},
+  {group:'Step 6 — Final Wash & Protection: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Cowlings — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+    {label:'Apply Wax — Hull', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — confirm swirl-free, haze-free finish on all surfaces'},
+    {label:'1000 Grit Sand fully refined — no sanding marks remain', scope:'topside'},
+    {label:'1000 Grit Sand fully refined — Hull no sanding marks remain', scope:'hull'},
+    {label:'Heavy Cut fully refined — no cut marks visible under correction light', scope:'topside'},
+    {label:'Heavy Cut fully refined — Hull no cut marks visible', scope:'hull'},
+    {label:'Medium Cut fully refined — Topside smooth and ready for final polish stage', scope:'topside'},
+    {label:'Medium Cut fully refined — Hull smooth', scope:'hull'},
+    {label:'Polish coverage confirmed — Topside, Non Skid, Isinglass, Cowlings all even and bright', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even and bright', scope:'hull'},
+    {label:'Wax confirmed — Topside: smooth, consistent sheen, no thin spots', scope:'topside'},
+    {label:'Wax confirmed — Hull: smooth, consistent sheen', scope:'hull'},
+    {label:'Ceramic Spray confirmed — Topside & Cowlings: no streaks or missed spots', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: no streaks or missed sections', scope:'hull'},
+    {label:'Ceramic Spray confirmed — All glass, screens, and doors', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Inside compartments and head', scope:'topside'},
+    {label:'All vinyl seats — deep cleaned, UV & ceramic protection applied', scope:'topside'},
+    {label:'All compartments — deep cleaned, vacuumed, odor-neutralized', scope:'topside'},
+    {label:'Fish boxes — deep cleaned, odor-neutralized', scope:'topside'},
+    {label:'Head — deep cleaned, disinfected, odor-neutralized', scope:'topside'},
+    {label:'Non-skid — oxidation removed, UV ceramic protection applied', scope:'topside'},
+    {label:'Bilge — cleaned, odor-neutralizer applied', scope:'topside'},
+    {label:'All metal — polished, ceramic sealant applied, no tarnish', scope:'topside'},
+    {label:'Stainless hardware — screws, cupholders, fittings cleaned and polished', scope:'topside'},
+    {label:'All isinglass / glass — clarity polished, streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots', scope:'topside'},
+    {label:'All plastic trim — UV restored and protected', scope:'topside'},
+    {label:'Steering console, gauges, switch panel — detailed and UV protected', scope:'topside'},
+    {label:'Windshield track & gaskets — cleaned and conditioned', scope:'topside'},
+    {label:'Caulking & seals — cleaned and conditioned', scope:'topside'},
+    {label:'Anchor locker — rinsed and refreshed', scope:'topside'},
+    {label:'Engine bay — cosmetically cleaned, plastic protection applied', scope:'topside'},
+    {label:'Trailer (if applicable) — detailed and tire shine applied'},
+    {label:'Scum line fully removed — waterline completely clean', scope:'hull'},
+    {label:'Hull rust and stains fully removed', scope:'hull'},
+    {label:'Final "Correction Light" inspection — elite finish confirmed'},
+    {label:'No compound dust, lint, fingerprints, or residue anywhere'},
+    {label:'Job site clean — no product, pads, or towels left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+
+'RP-3': pkg('Revival Package','Level 3','RP L3','#534ab7',[
+  {group:'Before Detail', scope:'all', items:[
+    {label:'Take "Before" photos/video for marketing purposes'},
+    {label:'Take photos/video of pre-existing damage and notify client'},
+    {label:'Remove all personal items from compartments and detachable seats'},
+  ]},
+  {group:'Step 1 — Initial Wash: Topside', scope:'topside', items:[
+    {label:'Rinse Topside'},
+    {label:'Remove Rust Stains — Topside', product:'Revival Rust Stain Remover'},
+    {label:'Remove Water Spots on GLASS (not isinglass)', product:'Revival Rust Stain Remover'},
+    {label:'Deep Clean Vinyl Seats', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Compartments', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Clean Head', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Fish Boxes & Bilge', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Engine Bay (if needed)', product:'Revival Intense / Revival Mold & Mildew Clean'},
+    {label:'Wash Topside', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Final Rinse Topside'},
+  ]},
+  {group:'Step 1 — Initial Wash: Hull', scope:'hull', items:[
+    {label:'Remove Scum Line / Hull Stains', product:'Revival Rust Stain Remover'},
+    {label:'Rinse Hull'},
+    {label:'Wash Hull', product:'Revival Wash & Wax Boat Soap'},
+    {label:'Dry Hull', product:'Towels/Chamois; Blower if needed'},
+  ]},
+  {group:'Step 2 — Multi-Stage Dry Sand', scope:'all', items:[
+    {label:'Assess oxidation — determine sanding grit sequence needed'},
+    {label:'Sand Topside — 320, 400, 600, 800, 1000 Grit as needed', product:'SunMight Film Finish Discs', scope:'topside'},
+    {label:'Sand Hull — 320, 400, 600, 800, 1000 Grit as needed', product:'SunMight Film Finish Discs', scope:'hull'},
+  ]},
+  {group:'Step 3 — Heavy Cut: Topside', scope:'topside', items:[
+    {label:'Heavy Cut Topside', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+    {label:'Heavy Cut Non Skid', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 3 — Heavy Cut: Hull', scope:'hull', items:[
+    {label:'Heavy Cut Hull', product:'Rotary | White Wool Pad | Revival Heavy Cut Compound'},
+  ]},
+  {group:'Step 4 — Medium Cut: Topside', scope:'topside', items:[
+    {label:'Medium Cut Topside', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+    {label:'Medium Cut Non Skid', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 4 — Medium Cut: Hull', scope:'hull', items:[
+    {label:'Medium Cut Hull', product:'Rotary | Yellow Wool Pad | Revival Medium Cut Compound'},
+  ]},
+  {group:'Step 5 — Polish: Topside', scope:'topside', items:[
+    {label:'Polish Topside', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+    {label:'Polish Isinglass (if applicable)'},
+    {label:'Polish Non Skid'},
+    {label:'Polish Cowlings (if applicable)'},
+  ]},
+  {group:'Step 5 — Polish: Hull', scope:'hull', items:[
+    {label:'Polish Hull', product:'21mm DA | Orange Foam Pad | Revival Polish & Protect'},
+  ]},
+  {group:'Step 6 — Final Wash & Protection: Topside', scope:'topside', items:[
+    {label:'Rinse Topside & Windows/Isinglass — remove compound dust & splatter'},
+    {label:'Clean Non-Skid / Foam Floors', product:'Revival Intense Clean'},
+    {label:'Rinse Compartments and Fish Boxes'},
+    {label:'Dry Topside, Windows/Isinglass'},
+    {label:'Vacuum & Wipe Out Compartments, Fish Boxes, Head'},
+    {label:'Deep Metal Polish — Topside', product:'Revival Corrosion Blocker / Ceramic Metal Sealant'},
+    {label:'Restore & Protect Vinyl Seats', product:'Revival Vinyl Guard'},
+    {label:'Apply Wax — Topside & Cowlings', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Topside & Cowlings', product:'Revival Ceramic Spray'},
+    {label:'Apply Ceramic Spray — All Glass, Screens & Doors'},
+    {label:'Apply Ceramic Spray — Inside Compartments & Head'},
+  ]},
+  {group:'Step 6 — Final Wash & Protection: Hull', scope:'hull', items:[
+    {label:'Rinse Hull & Cowlings — remove compound dust & splatter'},
+    {label:'Dry Hull & Cowlings'},
+    {label:'Apply Wax — Hull', product:'Revival Premium Boat Wax'},
+    {label:'Apply Ceramic Spray — Hull', product:'Revival Ceramic Spray'},
+  ]},
+  {group:'Post Detail Inspection', scope:'all', items:[
+    {label:'Correction light check — confirm swirl-free, haze-free finish on all surfaces'},
+    {label:'Multi-step sanding sequence fully refined — zero sanding marks remain', scope:'topside'},
+    {label:'Multi-step sanding sequence fully refined — Hull zero sanding marks remain', scope:'hull'},
+    {label:'Heavy Cut fully refined — no cut marks visible under correction light', scope:'topside'},
+    {label:'Heavy Cut fully refined — Hull no cut marks visible', scope:'hull'},
+    {label:'Medium Cut fully refined — Topside smooth', scope:'topside'},
+    {label:'Medium Cut fully refined — Hull smooth', scope:'hull'},
+    {label:'Polish coverage confirmed — Topside, Non Skid, Isinglass, Cowlings all even', scope:'topside'},
+    {label:'Polish coverage confirmed — Hull even and bright', scope:'hull'},
+    {label:'Wax confirmed — Topside: smooth, consistent sheen, no thin spots', scope:'topside'},
+    {label:'Wax confirmed — Hull: smooth, consistent sheen', scope:'hull'},
+    {label:'Ceramic Spray confirmed — Topside & Cowlings: no streaks or missed spots', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Hull: no streaks or missed sections', scope:'hull'},
+    {label:'Ceramic Spray confirmed — All glass, screens, and doors', scope:'topside'},
+    {label:'Ceramic Spray confirmed — Inside compartments and head', scope:'topside'},
+    {label:'All vinyl seats — deep cleaned, UV & ceramic protection applied', scope:'topside'},
+    {label:'All compartments — deep cleaned, vacuumed, odor-neutralized', scope:'topside'},
+    {label:'Fish boxes — deep cleaned, odor-neutralized', scope:'topside'},
+    {label:'Head — deep cleaned, disinfected, odor-neutralized', scope:'topside'},
+    {label:'Non-skid — extreme oxidation removed, UV ceramic protection applied', scope:'topside'},
+    {label:'Bilge — cleaned, odor-neutralizer applied', scope:'topside'},
+    {label:'All metal — polished, ceramic sealant applied, no tarnish', scope:'topside'},
+    {label:'Stainless hardware — screws, cupholders, fittings cleaned and polished', scope:'topside'},
+    {label:'All isinglass / glass — clarity polished, streak free', scope:'topside'},
+    {label:'All windows and screens — no water spots', scope:'topside'},
+    {label:'All plastic trim — UV restored and protected', scope:'topside'},
+    {label:'Steering console, gauges, switch panel — detailed and UV protected', scope:'topside'},
+    {label:'Windshield track & gaskets — cleaned and conditioned', scope:'topside'},
+    {label:'Caulking & seals — cleaned and conditioned', scope:'topside'},
+    {label:'Anchor locker — rinsed and refreshed', scope:'topside'},
+    {label:'Engine bay — cosmetically cleaned, plastic protection applied', scope:'topside'},
+    {label:'Trailer (if applicable) — detailed and tire shine applied'},
+    {label:'Scum line fully removed — waterline completely clean', scope:'hull'},
+    {label:'Hull rust and stains fully removed', scope:'hull'},
+    {label:'Final "Correction Light" inspection — elite finish confirmed on all corrected surfaces'},
+    {label:'No compound dust, lint, fingerprints, or residue anywhere on vessel'},
+    {label:'Job site clean — no product, pads, or towels left behind'},
+    {label:'Boat is ready for client delivery'},
+  ]},
+]),
+};
+
+const PKG_LIST = [
+  {key:'WW-1',name:'Wash & Wax',level:'Level 1'},
+  {key:'WW-2',name:'Wash & Wax',level:'Level 2'},
+  {key:'WW-3',name:'Wash & Wax',level:'Level 3'},
+  {key:'BS-1',name:'Buff & Shine',level:'Level 1'},
+  {key:'BS-2',name:'Buff & Shine',level:'Level 2'},
+  {key:'BS-3',name:'Buff & Shine',level:'Level 3'},
+  {key:'RP-1',name:'Revival Pkg',level:'Level 1'},
+  {key:'RP-2',name:'Revival Pkg',level:'Level 2'},
+  {key:'RP-3',name:'Revival Pkg',level:'Level 3'},
+];
+
+// ═══ SCOPE FILTER ═══
+// Returns items visible for a given scope setting ('full','topside','hull')
+function scopeFilter(scope) {
+  // For a group: show if group.scope matches or is 'all'
+  // For an item: item.scope is optional; if set, must match
+  return function(group) {
+    const gs = group.scope || 'all';
+    if (gs === 'all') return true;
+    if (scope === 'full') return true; // full vessel shows everything
+    if (scope === 'topside') return gs === 'topside' || gs === 'all';
+    if (scope === 'hull') return gs === 'hull' || gs === 'all';
+    return true;
+  };
+}
+function itemScopeOk(item, scope) {
+  if (!item.scope) return true;
+  if (scope === 'full') return true;
+  if (scope === 'topside') return item.scope === 'topside' || item.scope === 'all';
+  if (scope === 'hull') return item.scope === 'hull' || item.scope === 'all';
+  return true;
+}
+
+// Build effective steps for a job (scope + wax addon)
+function countTotalSteps(job) {
+  return buildEffectiveSteps(job).reduce((a,g)=>a+g.items.length,0);
+}
+
+// ═══ STATE ═══
+let jobs = [], dailyItems = [], dailyChecked = {}, currentJobId = null;
+let jmMode = 'new', jmEditId = null;
+let jmSelectedPkg = null, jmSelectedScope = null, jmWaxOn = false;
+
+function loadState() {
+  try {
+    const sd = localStorage.getItem('rmc_daily_items');
+    dailyItems = sd ? JSON.parse(sd) : JSON.parse(JSON.stringify(DEFAULT_DAILY_ITEMS));
+    const sc = localStorage.getItem('rmc_daily_checked_'+todayKey());
+    dailyChecked = sc ? JSON.parse(sc) : {};
+  } catch(e) { dailyItems=JSON.parse(JSON.stringify(DEFAULT_DAILY_ITEMS)); dailyChecked={}; }
+}
+function saveJobs() {
+  // Save to Firestore
+  if(window._db) {
+    window._db.collection('rmc_data').doc('jobs').set({jobs: jobs})
+      .catch(function(e){ console.error('Firestore saveJobs error', e); });
+  }
+}
+function saveDailyChecked() {
+  localStorage.setItem('rmc_daily_checked_'+todayKey(), JSON.stringify(dailyChecked));
+  const log = getDayLog();
+  const done = dailyItems.filter(it=>dailyChecked[it.id]).length;
+  log[todayKey()] = {complete:done===dailyItems.length&&dailyItems.length>0, score:done, total:dailyItems.length, checks:{...dailyChecked}};
+  localStorage.setItem('rmc_daylog', JSON.stringify(log));
+}
+function getDayLog(){try{return JSON.parse(localStorage.getItem('rmc_daylog')||'{}');}catch(e){return{};}}
+function todayKey(){return new Date().toISOString().split('T')[0];}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+
+// ═══ TAB ═══
+// ═══ JOBS LIST ═══
+function renderJobsList() {
+  const active = jobs.filter(j=>j.status!=='complete');
+  const completed = jobs.filter(j=>j.status==='complete');
+  document.getElementById('jobs-subtitle').textContent = active.length+' job'+(active.length!==1?'s':'')+' in progress';
+  const al = document.getElementById('active-jobs-list');
+  al.innerHTML = '';
+  if (!active.length) {
+    al.innerHTML = '<div class="empty-state">No active jobs.<br>Tap + New job to create one.</div>';
+  } else { active.forEach(j=>al.appendChild(buildJobCard(j))); }
+  const ch = document.getElementById('completed-head');
+  const cl = document.getElementById('completed-jobs-list');
+  cl.innerHTML = '';
+  if (completed.length) { ch.style.display='block'; completed.forEach(j=>cl.appendChild(buildJobCard(j))); }
+  else ch.style.display='none';
+}
+
+function buildJobCard(job) {
+  const pkg = PACKAGES[job.pkgKey];
+  const total = countTotalSteps(job);
+  const done = Object.values(job.checked||{}).filter(Boolean).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  const isComplete = job.status==='complete';
+  const dotColor = isComplete?'var(--green)':done>0?'var(--amber)':'var(--blue)';
+  const scopeLabel = {full:'Full vessel',topside:'Topside only',hull:'Hull only'}[job.scope||'full']||'Full vessel';
+  const waxTag = job.waxAddon?' <span style="color:var(--amber);font-size:10px;font-weight:600">+WAX</span>':'';
+  const statusPill = isComplete
+    ?'<span class="pill pill-complete">Complete</span>'
+    :done>0?'<span class="pill pill-progress">In progress</span>'
+    :'<span class="pill pill-active">Not started</span>';
+  const card = document.createElement('div');
+  card.className='job-card';
+  card.onclick=()=>openJobDetail(job.id);
+  card.innerHTML=`<div class="job-card-inner">
+    <div class="job-status-dot" style="background:${dotColor}"></div>
+    <div class="job-info">
+      <div class="job-name">${job.client} — ${job.boatSize} ${job.boatType}</div>
+      <div class="job-meta">${pkg?pkg.name+' · '+pkg.level:''}${waxTag} &nbsp;·&nbsp; <span class="pill pill-scope">${scopeLabel}</span> &nbsp;${statusPill}</div>
+      <div class="job-progress-txt">${done}/${total} steps · ${pct}%</div>
+      <div class="job-prog-mini"><div class="job-prog-mini-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="job-arrow">›</div>
+  </div>`;
+  return card;
+}
+
+// ═══ JOB MODAL (new & edit) ═══
+function buildPkgGrid() {
+  const grid = document.getElementById('jm-pkg-grid');
+  grid.innerHTML='';
+  PKG_LIST.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='pkg-option';
+    div.dataset.key=p.key;
+    div.innerHTML=`<div class="pkg-option-name">${p.name}</div><div class="pkg-option-level">${p.level}</div>`;
+    div.onclick=()=>{
+      document.querySelectorAll('.pkg-option').forEach(el=>el.classList.remove('selected'));
+      div.classList.add('selected');
+      jmSelectedPkg=p.key;
+      const isBS=p.key.startsWith('BS-');
+      document.getElementById('jm-wax-group').style.display=isBS?'block':'none';
+      if(!isBS){jmWaxOn=false;updateWaxUI();}
+    };
+    grid.appendChild(div);
+  });
+}
+
+function selectScope(s) {
+  jmSelectedScope=s;
+  document.querySelectorAll('.scope-option').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.scope===s);
+  });
+}
+
+function toggleWax() {
+  jmWaxOn=!jmWaxOn;
+  updateWaxUI();
+}
+function updateWaxUI() {
+  const cb=document.getElementById('jm-wax-cb');
+  const row=cb.closest('.wax-toggle-row');
+  if(jmWaxOn){
+    cb.classList.add('on');
+    cb.innerHTML='<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    row.style.borderColor='var(--green)';row.style.background='var(--green-bg)';
+  } else {
+    cb.classList.remove('on');cb.innerHTML='';
+    row.style.borderColor='var(--border2)';row.style.background='var(--surface)';
+  }
+}
+
+function closeJobModal() { document.getElementById('job-modal').classList.remove('open'); }
+
+// ═══ JOB DETAIL ═══
+function openJobDetail(id) {
+  currentJobId=id;
+  const job=jobs.find(j=>j.id===id);
+  if(!job)return;
+  document.getElementById('jobs-list-view').style.display='none';
+  document.getElementById('job-detail-view').style.display='block';
+  renderJobDetail(job);
+}
+
+function closeJobDetail() {
+  currentJobId=null;
+  document.getElementById('jobs-list-view').style.display='block';
+  document.getElementById('job-detail-view').style.display='none';
+  renderJobsList();
+}
+
+function renderJobDetail(job) {
+  const pkg=PACKAGES[job.pkgKey];
+  if(!pkg)return;
+  const steps=buildEffectiveSteps(job);
+  const total=steps.reduce((a,g)=>a+g.items.length,0);
+  const done=Object.values(job.checked||{}).filter(Boolean).length;
+  const pct=total?Math.round((done/total)*100):0;
+  const isComplete=done===total&&total>0;
+  const scope=job.scope||'full';
+  const scopeLabel={full:'Full vessel',topside:'Topside only',hull:'Hull only'}[scope]||'Full vessel';
+
+  // Header
+  const waxBadge=job.waxAddon?'<span class="jbadge">+ Wax</span>':'';
+  const quotedBadge=(currentUser&&currentUser.role==='admin'&&job.quotedPrice)?`<span class="jbadge" style="background:rgba(29,158,117,.3);color:#a3f0d6">💰 $${Math.round(job.quotedPrice).toLocaleString()}</span>`:'';
+  document.getElementById('job-detail-header').innerHTML=`
+    <div class="job-header-title">${job.client}</div>
+    <div class="job-header-sub">${job.boatSize} ${job.boatType} &nbsp;·&nbsp; ${job.date}</div>
+    <div class="job-header-badges">
+      <span class="jbadge">${pkg.name} · ${pkg.level}</span>
+      <span class="jbadge">${scopeLabel}</span>
+      ${waxBadge}
+      ${quotedBadge}
+    </div>
+    <div class="job-prog-row">
+      <div class="job-prog-track"><div class="job-prog-fill" style="width:${pct}%"></div></div>
+      <div class="job-prog-label">${done}/${total} · ${pct}%</div>
+    </div>`;
+
+  document.getElementById('job-complete-banner').classList.toggle('show',isComplete);
+
+  // Action row
+  const ar=document.getElementById('job-action-row');
+  ar.innerHTML='';
+  const editBtn=document.createElement('button');
+  editBtn.className='btn btn-amber btn-sm';
+  editBtn.textContent='✏ Edit job';
+  editBtn.onclick=()=>openJobModal(job.id);
+  ar.appendChild(editBtn);
+  if(job.status!=='complete'){
+    const markBtn=document.createElement('button');
+    markBtn.className='btn btn-green btn-sm';
+    markBtn.style.flex='1';
+    markBtn.textContent='Mark complete';
+    markBtn.onclick=()=>markJobComplete(job.id);
+    ar.appendChild(markBtn);
+  } else {
+    const reopen=document.createElement('button');
+    reopen.className='btn btn-sm';
+    reopen.style.flex='1';
+    reopen.textContent='Reopen job';
+    reopen.onclick=()=>{job.status='active';saveJobs();renderJobDetail(job);};
+    ar.appendChild(reopen);
+  }
+  const delBtn=document.createElement('button');
+  delBtn.className='btn btn-danger btn-sm';
+  delBtn.textContent='Delete';
+  delBtn.onclick=()=>deleteJob(job.id);
+  ar.appendChild(delBtn);
+
+  // Checklist
+  const wrap=document.getElementById('job-detail-checklist');
+  wrap.innerHTML='';
+  let stepIdx=0;
+  steps.forEach((group,gi)=>{
+    const isPost=group.group.toLowerCase().includes('post');
+    const doneInGroup=group.items.filter((_,ii)=>{
+      const key=`g${gi}i${ii}`;
+      return job.checked&&job.checked[key];
+    }).length;
+    const groupDiv=document.createElement('div');
+    groupDiv.className='step-group';
+    groupDiv.innerHTML=`<div class="step-group-header"><span class="step-group-name">${group.group}</span><span class="step-group-count">${doneInGroup}/${group.items.length}</span></div>`;
+
+    group.items.forEach((item,ii)=>{
+      const key=`g${gi}i${ii}`;
+      const isDone=job.checked&&job.checked[key];
+      const auditInfo=job.audit&&job.audit[key];
+      const auditBadge=auditInfo?`<span class="audit-badge">${auditInfo.initials} · ${auditInfo.at}</span>`:'';
+      const row=document.createElement('div');
+      const customTag=item._custom?'<span class="step-custom-tag">custom</span>':'';
+      const waxTag=item._wax?'<span class="step-custom-tag" style="background:var(--amber-bg);color:var(--amber)">+wax</span>':'';
+
+      if(isPost){
+        row.className='inspect-item'+(isDone?' done':'');
+        row.innerHTML=`<div class="icb"><svg class="icb-check" width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="inspect-label">${item.label}${customTag}${waxTag}${auditBadge}</div>${item._custom&&job.status!=='complete'?`<button class="inspect-delete-btn" onclick="removeCustomItem(event,'${job.id}','${item._customId}')">✕</button>`:''}`;
+      } else {
+        stepIdx++;
+        row.className='step-item'+(isDone?' done':'');
+        row.innerHTML=`<div class="step-num">${isDone?'<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,7 7.5,1.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':stepIdx}</div><div class="step-body"><div class="step-label">${item.label}${customTag}${waxTag}${auditBadge}</div>${item.product?`<div class="step-product">${item.product}</div>`:''}</div>${item._custom&&job.status!=='complete'?`<button class="step-delete-btn" onclick="removeCustomItem(event,'${job.id}','${item._customId}')">✕</button>`:''}`;
+      }
+
+      if(job.status!=='complete') {
+        row.onclick=(e)=>{if(e.target.classList.contains('step-delete-btn')||e.target.classList.contains('inspect-delete-btn'))return;toggleJobStep(job.id,key);};
+      }
+      groupDiv.appendChild(row);
+    });
+
+    // Add custom item row per group
+    if(job.status!=='complete'){
+      const addRow=document.createElement('div');
+      addRow.className='add-item-row';
+      addRow.innerHTML=`<input class="add-item-input" placeholder="Add item to this section..." id="add-input-g${gi}"/><button class="add-item-btn" onclick="addCustomItem('${job.id}','${group.group}','g${gi}')">Add</button>`;
+      groupDiv.appendChild(addRow);
+    }
+
+    wrap.appendChild(groupDiv);
+  });
+}
+
+function addCustomItem(jobId, groupName, inputId) {
+  const input=document.getElementById('add-input-'+inputId);
+  if(!input)return;
+  const label=input.value.trim();
+  if(!label){showToast('Enter an item first');return;}
+  const job=jobs.find(j=>j.id===jobId);
+  if(!job)return;
+  if(!job.customItems)job.customItems=[];
+  job.customItems.push({group:groupName,label,_custom:true,_customId:uid()});
+  saveJobs();
+  renderJobDetail(job);
+  showToast('Item added');
+}
+
+function removeCustomItem(e, jobId, customId) {
+  e.stopPropagation();
+  const job=jobs.find(j=>j.id===jobId);
+  if(!job||!job.customItems)return;
+  job.customItems=job.customItems.filter(ci=>ci._customId!==customId);
+  saveJobs();
+  renderJobDetail(job);
+  showToast('Item removed');
+}
+
+function markJobComplete(id) {
+  const job=jobs.find(j=>j.id===id);
+  if(!job)return;
+  job.status='complete';
+  saveJobs();
+  renderJobDetail(job);
+  showToast('Job marked complete');
+}
+
+function deleteJob(id) {
+  if(!confirm('Delete this job? All progress will be lost.'))return;
+  jobs=jobs.filter(j=>j.id!==id);
+  saveJobs();
+  closeJobDetail();
+  showToast('Job deleted');
+}
+
+// ═══ DAILY CHECKLIST DATA ═══
+const DAILY_SECTIONS=[
+  {id:'pre',name:'Pre-job inspection',color:'#378add'},
+  {id:'job',name:'On-the-job leadership',color:'#1d9e75'},
+  {id:'post',name:'Post-job sign-off',color:'#ba7517'},
+  {id:'van',name:'Van & inventory',color:'#888780'},
+  {id:'eod',name:'End of day',color:'#534ab7'},
+];
+const DEFAULT_DAILY_ITEMS=[
+  {id:'pre1',sec:'pre',label:'Video walk-around completed before any work begins',note:'Record entire vessel, narrate all findings. Keep on phone.',tag:''},
+  {id:'pre2',sec:'pre',label:'Damage found — video sent to Drake immediately',note:'No damage: keep locally. Any damage: send before work starts.',tag:'req'},
+  {id:'pre3',sec:'pre',label:'Crew briefed on scope and assignments before starting',note:'',tag:''},
+  {id:'job1',sec:'job',label:'Led from the front — on the tools alongside crew all day',note:'',tag:''},
+  {id:'job2',sec:'job',label:'Professional conduct maintained on client property',note:'No complaints about job, client, pay, or schedule.',tag:''},
+  {id:'job3',sec:'job',label:'Any mid-job damage reported to Drake immediately',note:'Photo or video the moment it is found.',tag:'req'},
+  {id:'post1',sec:'post',label:'Post-detail checklist completed and signed off personally',note:'Every line item verified before job is marked done.',tag:'req'},
+  {id:'post2',sec:'post',label:'Final walk-around completed before leaving the job site',note:'All surfaces, hardware, caulking, glass.',tag:''},
+  {id:'post3',sec:'post',label:'Job site left clean — no trash, product residue, or equipment behind',note:'',tag:''},
+  {id:'van1',sec:'van',label:'Van clean and organized before leaving for first job',note:'Tools in place, no trash or loose product.',tag:''},
+  {id:'van2',sec:'van',label:'All products stocked for today\'s jobs',note:'Restock using company card before leaving if anything is low.',tag:''},
+  {id:'van3',sec:'van',label:'Any low or out-of-stock products reported to Drake today',note:'',tag:''},
+  {id:'van4',sec:'van',label:'Van washed and fully cleaned — inside and outside',note:'',tag:'fri'},
+  {id:'van5',sec:'van',label:'Van used for work purposes only today',note:'Personal use requires prior written approval from Drake.',tag:''},
+  {id:'eod1',sec:'eod',label:'All jobs completed today confirmed with Drake',note:'',tag:''},
+  {id:'eod2',sec:'eod',label:'Any damage, crew issues, or client feedback reported to Drake',note:'',tag:''},
+];
+
+// ═══ DAILY RENDER ═══
+function renderDaily() {
+  const wrap=document.getElementById('daily-sections-wrap');
+  wrap.innerHTML='';
+  DAILY_SECTIONS.forEach(sec=>{
+    const secItems=dailyItems.filter(it=>it.sec===sec.id);
+    if(!secItems.length)return;
+    const doneCount=secItems.filter(it=>dailyChecked[it.id]).length;
+    const div=document.createElement('div');
+    div.className='chk-section';
+    div.innerHTML=`<div class="chk-section-hdr"><div style="display:flex;align-items:center;gap:8px"><div class="chk-sdot" style="background:${sec.color}"></div><div class="chk-sname">${sec.name}</div></div><div class="chk-scount">${doneCount}/${secItems.length}</div></div>`;
+    secItems.forEach(it=>{
+      const row=document.createElement('div');
+      row.className='chk-item'+(dailyChecked[it.id]?' done':'');
+      row.onclick=()=>toggleDaily(it.id);
+      let tagHtml='';
+      if(it.tag==='req')tagHtml='<span class="item-tag tag-req">Required</span>';
+      if(it.tag==='fri')tagHtml='<span class="item-tag tag-fri">Fridays only</span>';
+      row.innerHTML=`<div class="chk-cb"><svg class="chk-cbcheck" width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="chk-body"><div class="chk-label">${it.label}${tagHtml}</div>${it.note?`<div class="chk-note">${it.note}</div>`:''}</div>`;
+      div.appendChild(row);
+    });
+    wrap.appendChild(div);
+  });
+  updateDailyProgress();
+}
+
+function toggleDaily(id) {
+  dailyChecked[id]=!dailyChecked[id];
+  saveDailyChecked();
+  renderDaily();
+}
+
+function updateDailyProgress() {
+  const total=dailyItems.length;
+  const done=dailyItems.filter(it=>dailyChecked[it.id]).length;
+  const pct=total?Math.round((done/total)*100):0;
+  document.getElementById('prog-count').innerHTML=`${done} <span>/ ${total} complete</span>`;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('dl-complete-banner').classList.toggle('show',total>0&&done===total);
+}
+
+function generate() {
+  const dateVal=document.getElementById('inp-date').value;
+  const dateDisplay=dateVal?new Date(dateVal+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const jobsTxt=document.getElementById('inp-jobs').value.trim()||'—';
+  const notes=document.getElementById('inp-notes').value.trim();
+  const done=dailyItems.filter(it=>dailyChecked[it.id]).length;
+  const total=dailyItems.length;
+  const allDone=done===total;
+  let msg='━━━ REVIVAL MARINE CARE ━━━\nField Leader Daily Checklist\n'+dateDisplay+'\nJobs: '+jobsTxt+'\n'+(allDone?'✅':'⚠️')+' '+done+'/'+total+' items complete\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  DAILY_SECTIONS.forEach(sec=>{
+    const si=dailyItems.filter(it=>it.sec===sec.id);
+    if(!si.length)return;
+    msg+='\n'+sec.name.toUpperCase()+'\n';
+    si.forEach(it=>{msg+=(dailyChecked[it.id]?'✅':'❌')+' '+it.label+'\n';});
+  });
+  if(notes)msg+='\nNOTES\n'+notes+'\n';
+  msg+='\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n'+(allDone?'All items complete ✅':(total-done)+' item(s) not completed ❌');
+  document.getElementById('out-pre').textContent=msg;
+  document.getElementById('out-card').classList.add('visible');
+  document.getElementById('copy-btn').classList.add('visible');
+  document.getElementById('out-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function copyMsg() {
+  navigator.clipboard.writeText(document.getElementById('out-pre').textContent).then(()=>{
+    showToast('Copied — paste into your text to Drake');
+    document.getElementById('copy-btn').textContent='Copied ✓';
+    setTimeout(()=>{document.getElementById('copy-btn').textContent='Copy & send to Drake';},2000);
+  }).catch(()=>showToast('Select and copy the text above manually'));
+}
+
+function resetDaily() {
+  if(!confirm('Clear all checkmarks for today?'))return;
+  dailyChecked={};saveDailyChecked();
+  document.getElementById('inp-notes').value='';
+  document.getElementById('inp-jobs').value='';
+  document.getElementById('out-card').classList.remove('visible');
+  document.getElementById('copy-btn').classList.remove('visible');
+  renderDaily();showToast('Cleared');
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+document.getElementById('job-modal').addEventListener('click',function(e){if(e.target===this)closeJobModal();});
+document.getElementById('add-account-modal').addEventListener('click',function(e){if(e.target===this)closeAddAccountModal();});
+document.getElementById('login-pin').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ═══ ACCOUNTS & LOGIN ═══
+const DEFAULT_ACCOUNTS = [
+  {id:'drake', name:'Drake Roberts',   initials:'DR', color:'#185fa5', pin:'1234', role:'admin'},
+  {id:'bryce', name:'Bryce Webb',      initials:'BW', color:'#1d9e75', pin:'5678', role:'crew'},
+  {id:'caroline', name:'Caroline McCall', initials:'CM', color:'#534ab7', pin:'9012', role:'admin'},
+];
+
+let currentUser = null; // {id, name, initials, color, role}
+let accounts = [];
+let customTemplates = {}; // pkgKey -> steps array (overrides PACKAGES)
+
+function loadAccounts() {
+  try {
+    const sa = localStorage.getItem('rmc_accounts');
+    accounts = sa ? JSON.parse(sa) : JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+    const ct = localStorage.getItem('rmc_templates');
+    customTemplates = ct ? JSON.parse(ct) : {};
+  } catch(e) {
+    accounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+    customTemplates = {};
+  }
+}
+function saveAccounts() {
+  localStorage.setItem('rmc_accounts', JSON.stringify(accounts));
+  if(window._db) {
+    window._db.collection('rmc_data').doc('accounts').set({accounts: accounts})
+      .catch(function(e){ console.error('Firestore saveAccounts error', e); });
+  }
+}
+function saveTemplates() {
+  localStorage.setItem('rmc_templates', JSON.stringify(customTemplates));
+  if(window._db) {
+    window._db.collection('rmc_data').doc('templates').set({templates: customTemplates})
+      .catch(function(e){ console.error('Firestore saveTemplates error', e); });
+  }
+}
+
+function populateLoginSelect() {
+  const sel = document.getElementById('login-user-select');
+  sel.innerHTML = '<option value="">Choose account...</option>';
+  accounts.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = a.name;
+    sel.appendChild(opt);
+  });
+}
+
+function doLogin() {
+  const userId = document.getElementById('login-user-select').value;
+  const pin = document.getElementById('login-pin').value;
+  const err = document.getElementById('login-err');
+  const acct = accounts.find(a=>a.id===userId);
+  if (!acct || acct.pin !== pin) {
+    err.style.display='block';
+    document.getElementById('login-pin').value='';
+    return;
+  }
+  err.style.display='none';
+  currentUser = acct;
+  document.getElementById('login-screen').style.display='none';
+  updateHeaderUser();
+  renderAccountsList();
+}
+
+function doSignOut() {
+  currentUser = null;
+  document.getElementById('login-pin').value='';
+  document.getElementById('login-user-select').value='';
+  document.getElementById('login-err').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function updateHeaderUser() {
+  if (!currentUser) return;
+  document.getElementById('header-avatar').textContent = currentUser.initials;
+  document.getElementById('header-avatar').style.background = currentUser.color+'44';
+  document.getElementById('header-name').textContent = currentUser.name.split(' ')[0];
+}
+
+// ═══ ACCOUNTS SETTINGS ═══
+function renderAccountsList() {
+  const list = document.getElementById('accounts-list');
+  if (!list) return;
+  list.innerHTML = '';
+  accounts.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'settings-row';
+    const isMe = currentUser && currentUser.id === a.id;
+    row.innerHTML = `
+      <div class="account-avatar" style="background:${a.color}22;color:${a.color}">${a.initials}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${a.name}${isMe?' <span style="font-size:11px;color:var(--text3)">(you)</span>':''}</div>
+        <div style="margin-top:3px"><span class="account-role ${a.role==='admin'?'role-admin':'role-crew'}">${a.role==='admin'?'Admin':'Crew'}</span></div>
+      </div>
+      ${currentUser&&currentUser.role==='admin'&&!isMe?`<button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}')">Remove</button>`:''}`;
+    list.appendChild(row);
+  });
+}
+
+function openAddAccountModal() {
+  if (!currentUser || currentUser.role!=='admin') { showToast('Admin access required'); return; }
+  document.getElementById('aa-name').value='';
+  document.getElementById('aa-pin').value='';
+  document.getElementById('aa-role').value='crew';
+  document.getElementById('add-account-modal').classList.add('open');
+}
+function closeAddAccountModal() { document.getElementById('add-account-modal').classList.remove('open'); }
+
+function saveNewAccount() {
+  const name = document.getElementById('aa-name').value.trim();
+  const pin = document.getElementById('aa-pin').value.trim();
+  const role = document.getElementById('aa-role').value;
+  if (!name) { showToast('Enter a name'); return; }
+  if (!pin || pin.length < 4) { showToast('PIN must be at least 4 digits'); return; }
+  const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const colors = ['#185fa5','#1d9e75','#534ab7','#ba7517','#e24b4a','#d4537e','#0f6e56'];
+  const color = colors[accounts.length % colors.length];
+  const id = 'user_'+uid();
+  accounts.push({id, name, initials, color, pin, role});
+  saveAccounts();
+  closeAddAccountModal();
+  populateLoginSelect();
+  renderAccountsList();
+  showToast(name+' added');
+}
+
+function deleteAccount(id) {
+  if (!confirm('Remove this account?')) return;
+  accounts = accounts.filter(a=>a.id!==id);
+  saveAccounts();
+  populateLoginSelect();
+  renderAccountsList();
+  showToast('Account removed');
+}
+
+// ═══ TEMPLATE SYSTEM ═══
+// Get effective steps for a package (custom template if saved, else built-in)
+function getTemplateSteps(pkgKey) {
+  return customTemplates[pkgKey] || PACKAGES[pkgKey]?.steps || [];
+}
+
+// Override buildEffectiveSteps to use template instead of PACKAGES directly
+const _origBuildEffective = buildEffectiveSteps;
+// We patch buildEffectiveSteps to pull from customTemplates first
+// (rebind since it's a const — we'll update the reference in job detail render)
+
+let tmplActivePkg = null;
+let tmplDragSrc = null;
+
+function renderTemplateEditor(pkgKey) {
+  tmplActivePkg = pkgKey;
+  document.querySelectorAll('.tmpl-pkg-btn').forEach(b => b.classList.toggle('active', b.dataset.key===pkgKey));
+  const steps = JSON.parse(JSON.stringify(getTemplateSteps(pkgKey)));
+  const wrap = document.getElementById('tmpl-editor');
+  wrap.innerHTML = '';
+
+  // Save button
+  const saveRow = document.createElement('div');
+  saveRow.style.cssText='display:flex;gap:8px;margin-bottom:14px';
+  saveRow.innerHTML=`<button class="btn btn-green" style="flex:1" onclick="saveTemplate('${pkgKey}')">Save template</button><button class="btn btn-danger btn-sm" onclick="resetTemplate('${pkgKey}')">Reset to default</button>`;
+  wrap.appendChild(saveRow);
+
+  steps.forEach((group, gi) => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'tmpl-group';
+    groupDiv.innerHTML = `<div class="tmpl-group-hdr"><span>${group.group}</span><span style="font-size:11px;color:var(--text3)">${group.items.length} items</span></div>`;
+
+    const itemsWrap = document.createElement('div');
+    itemsWrap.dataset.gi = gi;
+
+    group.items.forEach((item, ii) => {
+      const row = buildTmplItemRow(item, gi, ii, pkgKey);
+      itemsWrap.appendChild(row);
+    });
+
+    // Add item row
+    const addRow = document.createElement('div');
+    addRow.className='tmpl-add-row';
+    addRow.innerHTML=`<input class="tmpl-add-input" placeholder="Add step..." id="tmpl-add-${gi}"/><select class="form-select" style="width:auto;padding:7px 10px;font-size:12px" id="tmpl-scope-${gi}"><option value="">All scopes</option><option value="topside">Topside only</option><option value="hull">Hull only</option></select><button class="tmpl-add-btn" onclick="tmplAddItem('${pkgKey}',${gi})">Add</button>`;
+    groupDiv.appendChild(itemsWrap);
+    groupDiv.appendChild(addRow);
+    wrap.appendChild(groupDiv);
+  });
+}
+
+function buildTmplItemRow(item, gi, ii, pkgKey) {
+  const row = document.createElement('div');
+  row.className='tmpl-item';
+  row.draggable=true;
+  row.dataset.gi=gi;
+  row.dataset.ii=ii;
+  const scopeTag = item.scope && item.scope!=='all' ? `<span style="font-size:10px;color:var(--amber);background:var(--amber-bg);border-radius:3px;padding:1px 5px;margin-left:4px">${item.scope}</span>` : '';
+  row.innerHTML=`<span class="drag-handle" title="Drag to reorder">⠿</span><div class="tmpl-item-text"><div class="tmpl-item-label">${item.label}${scopeTag}</div>${item.product?`<div class="tmpl-item-product">${item.product}</div>`:''}</div><button class="tmpl-item-del" onclick="tmplDeleteItem('${pkgKey}',${gi},${ii})" title="Remove">✕</button>`;
+
+  row.addEventListener('dragstart', e=>{
+    tmplDragSrc={gi,ii};
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+  });
+  row.addEventListener('dragend', ()=>row.classList.remove('dragging'));
+  row.addEventListener('dragover', e=>{
+    e.preventDefault();
+    document.querySelectorAll('.tmpl-item').forEach(r=>r.classList.remove('drag-over'));
+    row.classList.add('drag-over');
+  });
+  row.addEventListener('dragleave', ()=>row.classList.remove('drag-over'));
+  row.addEventListener('drop', e=>{
+    e.preventDefault();
+    row.classList.remove('drag-over');
+    if (!tmplDragSrc) return;
+    const toGi=parseInt(row.dataset.gi), toIi=parseInt(row.dataset.ii);
+    const fromGi=tmplDragSrc.gi, fromIi=tmplDragSrc.ii;
+    if (fromGi!==toGi||fromIi===toIi) return; // only same group reordering
+    const steps=JSON.parse(JSON.stringify(getTemplateSteps(tmplActivePkg)));
+    const items=steps[fromGi].items;
+    const [moved]=items.splice(fromIi,1);
+    items.splice(toIi,0,moved);
+    if (!customTemplates[tmplActivePkg]) customTemplates[tmplActivePkg]=JSON.parse(JSON.stringify(PACKAGES[tmplActivePkg].steps));
+    customTemplates[tmplActivePkg][fromGi].items=items;
+    renderTemplateEditor(tmplActivePkg);
+    tmplDragSrc=null;
+  });
+  return row;
+}
+
+function tmplDeleteItem(pkgKey, gi, ii) {
+  if (!customTemplates[pkgKey]) customTemplates[pkgKey]=JSON.parse(JSON.stringify(PACKAGES[pkgKey].steps));
+  customTemplates[pkgKey][gi].items.splice(ii,1);
+  renderTemplateEditor(pkgKey);
+}
+
+function tmplAddItem(pkgKey, gi) {
+  const input=document.getElementById(`tmpl-add-${gi}`);
+  const scopeSel=document.getElementById(`tmpl-scope-${gi}`);
+  if (!input) return;
+  const label=input.value.trim();
+  if (!label){showToast('Enter a step label');return;}
+  if (!customTemplates[pkgKey]) customTemplates[pkgKey]=JSON.parse(JSON.stringify(PACKAGES[pkgKey].steps));
+  const newItem={label};
+  if (scopeSel&&scopeSel.value) newItem.scope=scopeSel.value;
+  customTemplates[pkgKey][gi].items.push(newItem);
+  renderTemplateEditor(pkgKey);
+  showToast('Step added');
+}
+
+function saveTemplate(pkgKey) {
+  if (!currentUser||currentUser.role!=='admin'){showToast('Admin access required');return;}
+  saveTemplates();
+  showToast('Template saved — applies to new jobs going forward');
+}
+
+function resetTemplate(pkgKey) {
+  if (!confirm('Reset this template back to the default? Custom changes will be lost.')) return;
+  delete customTemplates[pkgKey];
+  saveTemplates();
+  renderTemplateEditor(pkgKey);
+  showToast('Template reset to default');
+}
+
+function buildTmplPkgSelect() {
+  const wrap=document.getElementById('tmpl-pkg-select');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  PKG_LIST.forEach(p=>{
+    const btn=document.createElement('div');
+    btn.className='tmpl-pkg-btn';
+    btn.dataset.key=p.key;
+    btn.innerHTML=`<div style="font-weight:500">${p.name}</div><div style="font-size:11px;opacity:.65;margin-top:2px">${p.level}</div>`;
+    btn.onclick=()=>renderTemplateEditor(p.key);
+    wrap.appendChild(btn);
+  });
+}
+
+// ═══ PATCH buildEffectiveSteps to use custom templates ═══
+function buildEffectiveSteps(job) {
+  const pkgKey = job.pkgKey;
+  const pkgBase = PACKAGES[pkgKey];
+  if(!pkgBase)return[];
+  // Use custom template if saved, else built-in steps
+  const templateSteps = customTemplates[pkgKey]
+    ? JSON.parse(JSON.stringify(customTemplates[pkgKey]))
+    : JSON.parse(JSON.stringify(pkgBase.steps));
+
+  const scope = job.scope || 'full';
+  const isBS = pkgKey && pkgKey.startsWith('BS-');
+
+  let steps = templateSteps
+    .filter(group=>{
+      const gs=group.scope||'all';
+      if(gs==='all')return true;
+      if(scope==='full')return true;
+      if(scope==='topside')return gs==='topside'||gs==='all';
+      if(scope==='hull')return gs==='hull'||gs==='all';
+      return true;
+    })
+    .map(group=>({
+      ...group,
+      items:group.items.filter(it=>{
+        if(!it.scope)return true;
+        if(scope==='full')return true;
+        if(scope==='topside')return it.scope==='topside'||it.scope==='all';
+        if(scope==='hull')return it.scope==='hull'||it.scope==='all';
+        return true;
+      })
+    }))
+    .filter(g=>g.items.length>0);
+
+  if(isBS&&job.waxAddon){
+    steps=steps.map(group=>{
+      const isPost=group.group.toLowerCase().includes('post');
+      if(!isPost)return group;
+      const items=[...group.items];
+      const readyIdx=items.findIndex(it=>it.label.includes('ready for client'));
+      const waxItems=[];
+      if(scope!=='hull')waxItems.push({label:'Wax add-on confirmed — Topside & Cowlings: smooth, consistent sheen',_wax:true});
+      if(scope!=='topside')waxItems.push({label:'Wax add-on confirmed — Hull: smooth, consistent sheen',_wax:true});
+      if(readyIdx>=0)items.splice(readyIdx,0,...waxItems);
+      else items.push(...waxItems);
+      return{...group,items};
+    });
+    const lastNonPost=[...steps].reverse().find(g=>!g.group.toLowerCase().includes('post'));
+    if(lastNonPost){
+      const idx=steps.indexOf(lastNonPost);
+      const waxSteps=[];
+      if(scope!=='hull')waxSteps.push({label:'Apply Wax — Topside & Cowlings (add-on)',product:'Revival Premium Boat Wax',_wax:true});
+      if(scope!=='topside')waxSteps.push({label:'Apply Wax — Hull (add-on)',product:'Revival Premium Boat Wax',_wax:true});
+      steps[idx]={...lastNonPost,items:[...lastNonPost.items,...waxSteps]};
+    }
+  }
+
+  if(job.customItems&&job.customItems.length){
+    job.customItems.forEach(ci=>{
+      const gi=steps.findIndex(g=>g.group===ci.group);
+      if(gi>=0)steps[gi].items.push({...ci,_custom:true});
+    });
+  }
+  return steps;
+}
+
+// ═══ AUDIT TRAIL — patch toggleJobStep ═══
+function toggleJobStep(jobId, key) {
+  const job=jobs.find(j=>j.id===jobId);
+  if(!job)return;
+  if(!job.checked)job.checked={};
+  if(!job.audit)job.audit={};
+  const nowDone=!job.checked[key];
+  job.checked[key]=nowDone;
+  if(nowDone && currentUser) {
+    job.audit[key]={name:currentUser.name,initials:currentUser.initials,color:currentUser.color,at:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})};
+  } else {
+    delete job.audit[key];
+  }
+  saveJobs();
+  renderJobDetail(job);
+}
+
+// ═══ INIT ═══
+loadAccounts();
+loadState();
+populateLoginSelect();
+buildPkgGrid();
+renderJobsList();
+renderAccountsList();
+document.getElementById('login-screen').style.display='flex';
+
+// ═══ FIREBASE REAL-TIME SYNC ═══
+(function initFirebase() {
+  var firebaseConfig = {
+    apiKey: "AIzaSyAQgGXzZohFwxSe2hOSn7HNQkn2yGotSjc",
+    authDomain: "revival-job.firebaseapp.com",
+    projectId: "revival-job",
+    storageBucket: "revival-job.firebasestorage.app",
+    messagingSenderId: "569104319011",
+    appId: "1:569104319011:web:f1146dc7f0b14f5be6a796"
+  };
+
+  // Load Firebase scripts dynamically
+  function loadScript(src, cb) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = cb;
+    s.onerror = function(){ console.error('Failed to load', src); setStatus('offline'); };
+    document.head.appendChild(s);
+  }
+
+  function setStatus(state) {
+    var dot = document.getElementById('sync-dot');
+    var lbl = document.getElementById('sync-label');
+    if(!dot || !lbl) return;
+    if(state === 'live') {
+      dot.style.background = '#1d9e75';
+      lbl.textContent = 'Live';
+    } else if(state === 'syncing') {
+      dot.style.background = '#ba7517';
+      lbl.textContent = 'Syncing...';
+    } else {
+      dot.style.background = '#e24b4a';
+      lbl.textContent = 'Offline';
+    }
+  }
+
+  function startListeners(db) {
+    window._db = db;
+
+    // Jobs — real-time listener
+    db.collection('rmc_data').doc('jobs').onSnapshot(function(doc) {
+      if(doc.exists) {
+        var data = doc.data();
+        if(data && data.jobs) {
+          jobs = data.jobs;
+          localStorage.setItem('rmc_jobs_v2', JSON.stringify(jobs));
+          renderJobsList();
+          // If viewing a job detail, refresh it
+          if(currentJobId) {
+            var j = jobs.find(function(x){return x.id===currentJobId;});
+            if(j) renderJobDetail(j);
+          }
+          // If calendar is open, refresh it
+          var calTab = document.getElementById('tab-calendar');
+          if(calTab && calTab.classList.contains('active')) {
+            if(calCurrentView === 'month') calDrawMonth();
+            else calDrawList();
+          }
+        }
+      }
+      setStatus('live');
+    }, function(err) {
+      console.error('Jobs listener error', err);
+      setStatus('offline');
+    });
+
+    // Accounts — real-time listener
+    db.collection('rmc_data').doc('accounts').onSnapshot(function(doc) {
+      if(doc.exists) {
+        var data = doc.data();
+        if(data && data.accounts) {
+          accounts = data.accounts;
+          localStorage.setItem('rmc_accounts', JSON.stringify(accounts));
+          populateLoginSelect();
+          renderAccountsList();
+        }
+      }
+    }, function(err){ console.error('Accounts listener error', err); });
+
+    // Templates — real-time listener
+    db.collection('rmc_data').doc('templates').onSnapshot(function(doc) {
+      if(doc.exists) {
+        var data = doc.data();
+        if(data && data.templates) {
+          customTemplates = data.templates;
+          localStorage.setItem('rmc_templates', JSON.stringify(customTemplates));
+        }
+      }
+    }, function(err){ console.error('Templates listener error', err); });
+
+    // Push current local data to Firestore on first connect if Firestore is empty
+    db.collection('rmc_data').doc('jobs').get().then(function(doc) {
+      if(!doc.exists || !doc.data() || !doc.data().jobs || doc.data().jobs.length === 0) {
+        if(jobs.length > 0) {
+          db.collection('rmc_data').doc('jobs').set({jobs: jobs});
+        }
+      }
+    });
+    db.collection('rmc_data').doc('accounts').get().then(function(doc) {
+      if(!doc.exists || !doc.data() || !doc.data().accounts) {
+        db.collection('rmc_data').doc('accounts').set({accounts: accounts});
+      }
+    });
+  }
+
+  setStatus('syncing');
+
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function() {
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js', function() {
+      try {
+        var app = firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+        startListeners(db);
+      } catch(e) {
+        console.error('Firebase init error', e);
+        setStatus('offline');
+        // Fall back to localStorage
+        var sj = localStorage.getItem('rmc_jobs_v2');
+        if(sj) { jobs = JSON.parse(sj); renderJobsList(); }
+      }
+    });
+  });
+})();
+
+// ═══ EVENT LISTENERS ═══
+document.getElementById('job-modal').addEventListener('click',function(e){if(e.target===this)closeJobModal();});
+document.getElementById('add-account-modal').addEventListener('click',function(e){if(e.target===this)closeAddAccountModal();});
+document.getElementById('profile-modal').addEventListener('click',function(e){if(e.target===this)closeProfileModal();});
+document.getElementById('login-pin').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.addEventListener('click',function(e){
+  const wrap=document.getElementById('user-dropdown-wrap');
+  if(wrap&&!wrap.contains(e.target))document.getElementById('user-dropdown-menu').classList.remove('open');
+});
+
+// ═══ DROPDOWN ═══
+function toggleUserDropdown(){document.getElementById('user-dropdown-menu').classList.toggle('open');}
+function goToSettings(){
+  document.getElementById('user-dropdown-menu').classList.remove('open');
+  // Settings is a hidden tab — clear all tab buttons, switch view only
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-settings').classList.add('active');
+  renderAccountsList();
+  buildTmplPkgSelect();
+}
+function openProfileEdit(){
+  document.getElementById('user-dropdown-menu').classList.remove('open');
+  if(!currentUser){showToast('Sign in first');return;}
+  document.getElementById('pm-name').value=currentUser.name;
+  document.getElementById('pm-pin').value='';
+  buildColorSwatches(currentUser.color);
+  document.getElementById('profile-modal').classList.add('open');
+}
+function closeProfileModal(){document.getElementById('profile-modal').classList.remove('open');}
+
+const AVATAR_COLORS=['#185fa5','#1d9e75','#534ab7','#ba7517','#e24b4a','#d4537e','#0f6e56','#888780','#1a1a18','#5DCAA5'];
+let pmSelectedColor=null;
+
+function buildColorSwatches(current){
+  pmSelectedColor=current;
+  const grid=document.getElementById('pm-color-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  AVATAR_COLORS.forEach(c=>{
+    const sw=document.createElement('div');
+    sw.className='color-swatch'+(c===current?' selected':'');
+    sw.style.cssText=`width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid ${c===current?'var(--text)':'transparent'};background:${c};transition:border-color .15s`;
+    sw.onclick=()=>{
+      document.querySelectorAll('.color-swatch').forEach(s=>s.style.borderColor='transparent');
+      sw.style.borderColor='var(--text)';
+      pmSelectedColor=c;
+    };
+    grid.appendChild(sw);
+  });
+}
+
+function saveProfile(){
+  if(!currentUser)return;
+  const name=document.getElementById('pm-name').value.trim();
+  const pin=document.getElementById('pm-pin').value.trim();
+  if(!name){showToast('Name cannot be empty');return;}
+  const acct=accounts.find(a=>a.id===currentUser.id);
+  if(!acct)return;
+  acct.name=name;
+  acct.initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  if(pin&&pin.length>=4)acct.pin=pin;
+  if(pmSelectedColor)acct.color=pmSelectedColor;
+  Object.assign(currentUser,acct);
+  saveAccounts();
+  updateHeaderUser();
+  populateLoginSelect();
+  renderAccountsList();
+  closeProfileModal();
+  showToast('Profile updated');
+}
+
+// ═══ CALENDAR ═══
+// ═══════════════════════════════════════════
+// CALENDAR — clean implementation
+// ═══════════════════════════════════════════
+let calCurrentView = 'list';
+let calCurrentMonth = new Date();
+
+function calShowView(v) {
+  calCurrentView = v;
+  const listEl = document.getElementById('cal-list-view');
+  const monthEl = document.getElementById('cal-month-view');
+  const btnList = document.getElementById('cal-view-list');
+  const btnMonth = document.getElementById('cal-view-month');
+  if (!listEl || !monthEl) return;
+  if (v === 'list') {
+    listEl.style.display = 'block';
+    monthEl.style.display = 'none';
+    if (btnList) { btnList.style.background = 'var(--text)'; btnList.style.color = '#fff'; }
+    if (btnMonth) { btnMonth.style.background = 'var(--surface2)'; btnMonth.style.color = 'var(--text2)'; }
+    calDrawList();
+  } else {
+    listEl.style.display = 'none';
+    monthEl.style.display = 'block';
+    if (btnList) { btnList.style.background = 'var(--surface2)'; btnList.style.color = 'var(--text2)'; }
+    if (btnMonth) { btnMonth.style.background = 'var(--text)'; btnMonth.style.color = '#fff'; }
+    calDrawMonth();
+  }
+}
+
+function calOpenTab() {
+  // Always reset to list view when opening calendar
+  calCurrentView = 'list';
+  const listEl = document.getElementById('cal-list-view');
+  const monthEl = document.getElementById('cal-month-view');
+  if (listEl) listEl.style.display = 'block';
+  if (monthEl) monthEl.style.display = 'none';
+  const btnList = document.getElementById('cal-view-list');
+  const btnMonth = document.getElementById('cal-view-month');
+  if (btnList) { btnList.style.background = 'var(--text)'; btnList.style.color = '#fff'; }
+  if (btnMonth) { btnMonth.style.background = 'var(--surface2)'; btnMonth.style.color = 'var(--text2)'; }
+  calDrawList();
+}
+
+function calGetVisibleJobs() {
+  if (!currentUser) return [];
+  if (currentUser.role === 'admin') return jobs;
+  return jobs.filter(j => !j.assignedTo || j.assignedTo.length === 0 || j.assignedTo.includes(currentUser.id));
+}
+
+function calPkgColor(pkgKey) {
+  if (!pkgKey) return '#888780';
+  if (pkgKey.startsWith('WW')) return '#185fa5';
+  if (pkgKey.startsWith('BS')) return '#1d9e75';
+  if (pkgKey.startsWith('RP')) return '#534ab7';
+  return '#888780';
+}
+
+function calDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function calJobDates(job) {
+  const start = new Date(job.date + 'T12:00:00');
+  const dur = parseFloat(job.duration || 1);
+  const end = new Date(start);
+  end.setDate(end.getDate() + Math.ceil(dur) - 1);
+  return { start, end };
+}
+
+function calDrawList() {
+  var el = document.getElementById('cal-jobs-list');
+  if (!el) return;
+  var myJobs = calGetVisibleJobs();
+  el.innerHTML = '';
+  if (!myJobs.length) {
+    el.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text2);font-size:14px">No jobs yet.<br>Tap + New job to create one.</div>';
+    return;
+  }
+  var sorted = myJobs.slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  sorted.forEach(function(job) {
+    var pkg = PACKAGES[job.pkgKey];
+    var color = calPkgColor(job.pkgKey);
+    var dur = parseFloat(job.duration || 1);
+    var durLabel = dur === 0.5 ? 'Half day' : dur === 1 ? '1 day' : dur + ' days';
+    var d = new Date(job.date + 'T12:00:00');
+    var dateLabel = d.toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'});
+    var assignedNames = (job.assignedTo || []).map(function(id){
+      var acc = accounts.find(function(a){return a.id===id;});
+      return acc ? acc.name.split(' ')[0] : null;
+    }).filter(Boolean).join(', ');
+    var total = countTotalSteps(job);
+    var done = Object.values(job.checked || {}).filter(Boolean).length;
+    var pct = total ? Math.round((done/total)*100) : 0;
+    var pkgLabel = pkg ? (pkg.name + ' · ' + pkg.level) : '';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;display:flex;gap:12px;align-items:stretch';
+    card.onclick = (function(jid){ return function(){ switchTab('jobs', document.querySelectorAll('.tab-btn')[0]); setTimeout(function(){openJobDetail(jid);}, 60); }; })(job.id);
+
+    var bar = document.createElement('div');
+    bar.style.cssText = 'width:4px;border-radius:999px;background:' + color + ';flex-shrink:0';
+    card.appendChild(bar);
+
+    var info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    info.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--text)">' + job.client + '</div>'
+      + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + job.boatSize + ' ' + job.boatType + '</div>'
+      + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + pkgLabel + ' &nbsp;·&nbsp; ' + dateLabel + ' &nbsp;·&nbsp; ' + durLabel + '</div>'
+      + (assignedNames ? '<div style="font-size:11px;color:var(--text3);margin-top:3px">\uD83D\uDC64 ' + assignedNames + '</div>' : '')
+      + '<div style="margin-top:8px;height:4px;border-radius:999px;background:var(--surface2);overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:999px"></div></div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-top:3px">' + done + '/' + total + ' steps · ' + pct + '%</div>';
+    card.appendChild(info);
+
+    var arrow = document.createElement('div');
+    arrow.style.cssText = 'color:var(--text3);font-size:18px;align-self:center';
+    arrow.textContent = '›';
+    card.appendChild(arrow);
+
+    el.appendChild(card);
+  });
+}
+
+function calPrevMonth() {
+  calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() - 1, 1);
+  calDrawMonth();
+}
+function calNextMonth() {
+  calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() + 1, 1);
+  calDrawMonth();
+}
+
+function calDrawMonth() {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const y = calCurrentMonth.getFullYear();
+  const m = calCurrentMonth.getMonth();
+  const lbl = document.getElementById('cal-month-label');
+  if (lbl) lbl.textContent = MONTHS[m] + ' ' + y;
+
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Hide popup
+  const popup = document.getElementById('cal-job-popup');
+  if (popup) popup.style.display = 'none';
+
+  const todayStr = calDateStr(new Date());
+  const myJobs = calGetVisibleJobs();
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+
+  for (let ci = 0; ci < totalCells; ci++) {
+    const dayNum = ci - firstDow + 1;
+    const isThisMonth = dayNum >= 1 && dayNum <= daysInMonth;
+    const cellDate = new Date(y, m, dayNum);
+    const dStr = calDateStr(cellDate);
+    const isBookingMode = !!_pendingBooking;
+
+    const cell = document.createElement('div');
+    let cellBg = isThisMonth ? 'var(--surface)' : 'var(--surface2)';
+    let cellBorder = dStr === todayStr ? 'var(--text)' : 'var(--border)';
+    let cellBorderW = dStr === todayStr ? '2px' : '1px';
+    let cellCursor = 'default';
+    if (isBookingMode && isThisMonth) {
+      cellBg = 'rgba(29,158,117,0.08)';
+      cellBorder = '#1d9e75';
+      cellBorderW = '1.5px';
+      cellCursor = 'pointer';
+    }
+    cell.style.cssText = 'min-height:68px;border-radius:8px;background:' + cellBg + ';border:' + cellBorderW + ' solid ' + cellBorder + ';padding:4px 3px;position:relative;opacity:' + (isThisMonth ? '1' : '0.4') + ';cursor:' + cellCursor + ';transition:background .1s';
+
+    if (isBookingMode && isThisMonth) {
+      cell.onmouseover = function(){ this.style.background = 'rgba(29,158,117,0.18)'; };
+      cell.onmouseout = function(){ this.style.background = 'rgba(29,158,117,0.08)'; };
+      cell.onclick = (function(ds){ return function(){ calConfirmBooking(ds); }; })(dStr);
+    }
+
+    // Day number
+    const numDiv = document.createElement('div');
+    if (isThisMonth) {
+      if (dStr === todayStr && !isBookingMode) {
+        numDiv.style.cssText = 'width:20px;height:20px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-bottom:3px';
+      } else {
+        numDiv.style.cssText = 'font-size:11px;font-weight:' + (isBookingMode ? '700' : '500') + ';color:' + (isBookingMode ? '#1d9e75' : 'var(--text2)') + ';margin-bottom:3px;padding:1px 2px';
+      }
+      numDiv.textContent = dayNum;
+    }
+    cell.appendChild(numDiv);
+
+    // Jobs on this day (still show even in booking mode)
+    if (isThisMonth) {
+      myJobs.forEach(job => {
+        const { start, end } = calJobDates(job);
+        const startStr = calDateStr(start);
+        const endStr = calDateStr(end);
+        if (dStr >= startStr && dStr <= endStr) {
+          const color = calPkgColor(job.pkgKey);
+          const isFirst = dStr === startStr;
+          const dow = cellDate.getDay();
+          const ev = document.createElement('div');
+          ev.style.cssText = 'background:' + color + ';color:#fff;font-size:9px;font-weight:600;padding:2px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer';
+          ev.textContent = (isFirst || dow === 0) ? job.client : '·';
+          if (!isBookingMode) {
+            ev.onclick = (function(j){ return function(e){ e.stopPropagation(); calShowPopup(j); }; })(job);
+          } else {
+            ev.onclick = (function(ds){ return function(e){ e.stopPropagation(); calConfirmBooking(ds); }; })(dStr);
+          }
+          cell.appendChild(ev);
+        }
+      });
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function calShowPopup(job) {
+  var popup = document.getElementById('cal-job-popup');
+  if (!popup) return;
+  var pkg = PACKAGES[job.pkgKey];
+  var color = calPkgColor(job.pkgKey);
+  var dur = parseFloat(job.duration || 1);
+  var durLabel = dur === 0.5 ? 'Half day' : dur === 1 ? '1 day' : dur + ' days';
+  var d = new Date(job.date + 'T12:00:00');
+  var dateLabel = d.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+  var assignedNames = (job.assignedTo || []).map(function(id){
+    var acc = accounts.find(function(a){return a.id===id;});
+    return acc ? acc.name : null;
+  }).filter(Boolean).join(', ') || 'Unassigned';
+  var total = countTotalSteps(job);
+  var done = Object.values(job.checked || {}).filter(Boolean).length;
+  var pkgLabel = pkg ? (pkg.name + ' · ' + pkg.level) : '';
+  var jobId = job.id;
+
+  popup.style.display = 'block';
+  popup.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+    + '<div style="display:flex;gap:10px;align-items:flex-start;flex:1">'
+    + '<div style="width:4px;border-radius:999px;background:' + color + ';align-self:stretch;min-height:50px;flex-shrink:0"></div>'
+    + '<div>'
+    + '<div style="font-size:15px;font-weight:600">' + job.client + ' \u2014 ' + job.boatSize + ' ' + job.boatType + '</div>'
+    + '<div style="font-size:12px;color:var(--text2);margin-top:3px">' + pkgLabel + '</div>'
+    + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + dateLabel + ' \u00b7 ' + durLabel + '</div>'
+    + '<div style="font-size:12px;color:var(--text2);margin-top:2px">Crew: ' + assignedNames + '</div>'
+    + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + done + '/' + total + ' steps complete</div>'
+    + '</div></div>'
+    + '<button id="cal-popup-close" style="background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;padding:0;line-height:1">\u2715</button>'
+    + '</div>'
+    + '<button id="cal-popup-open" style="width:100%;padding:10px;background:var(--text);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Open job checklist \u2192</button>';
+
+  document.getElementById('cal-popup-close').onclick = function(){ popup.style.display = 'none'; };
+  document.getElementById('cal-popup-open').onclick = function(){
+    switchTab('jobs', document.querySelectorAll('.tab-btn')[0]);
+    setTimeout(function(){ openJobDetail(jobId); }, 60);
+  };
+  popup.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// Legacy aliases so any old code calling these still works
+function renderCalList() { calDrawList(); }
+function renderCalMonth() { calDrawMonth(); }
+function switchCalView(v) { calShowView(v); }
+function pkgColor(k) { return calPkgColor(k); }
+function visibleJobs() { return calGetVisibleJobs(); }
+function fmtDate(d) { return calDateStr(d); }
+function jobEndDate(job) { return calJobDates(job); }
+
+
+// ═══ CREW ASSIGNMENT ═══
+function buildCrewList(selectedIds){
+  const list=document.getElementById('jm-crew-list');
+  if(!list)return;
+  list.innerHTML='';
+  accounts.forEach(a=>{
+    const isSelected=(selectedIds||[]).includes(a.id);
+    const chip=document.createElement('div');
+    chip.dataset.id=a.id;
+    chip.dataset.selected=isSelected?'1':'0';
+    const applyStyle=(on)=>{
+      chip.style.cssText=`display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1.5px solid ${on?a.color:'var(--border2)'};background:${on?a.color+'18':'var(--surface)'};cursor:pointer;font-size:13px;font-weight:${on?'600':'400'};color:${on?a.color:'var(--text2)'};transition:all .12s`;
+    };
+    applyStyle(isSelected);
+    chip.innerHTML=`<div style="width:20px;height:20px;border-radius:50%;background:${a.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0">${a.initials}</div>${a.name.split(' ')[0]}`;
+    chip.onclick=()=>{
+      const on=chip.dataset.selected!=='1';
+      chip.dataset.selected=on?'1':'0';
+      applyStyle(on);
+    };
+    list.appendChild(chip);
+  });
+}
+
+function getSelectedCrew(){
+  return Array.from(document.querySelectorAll('#jm-crew-list [data-id]')).filter(c=>c.dataset.selected==='1').map(c=>c.dataset.id);
+}
+
+// ════════════════════════════════════════════
+// ESTIMATOR — Admin only
+// ════════════════════════════════════════════
+
+// PRICING DATA (from Revival Pricing Structure PDF)
+const RATES = {
+  'WW-1':{base:35,label:'Wash & Wax L1'},
+  'WW-2':{base:55,label:'Wash & Wax L2'},
+  'WW-3':{base:75,label:'Wash & Wax L3'},
+  'BS-1':{base:55,label:'Buff & Shine L1'},
+  'BS-2':{base:90,label:'Buff & Shine L2'},
+  'BS-3':{base:100,label:'Buff & Shine L3'},
+  'RP-1':{base:90,label:'Revival Package L1'},
+  'RP-2':{base:150,label:'Revival Package L2'},
+  'RP-3':{base:null,label:'Revival Package L3',range:[200,350]}, // slider
+};
+const RP_ADDON_CERAMIC_GC = {1:65,2:75,3:85};
+const RP_ADDON_NONSKID    = {1:45,2:50,3:65};
+const WAX_RATE = 15; // per ft, BS packages
+
+let estPkg=null, estScope='full', estWaxOn=false;
+let estAddons={};
+
+function renderEstimateTab(){
+  const isAdmin=currentUser&&currentUser.role==='admin';
+  document.getElementById('est-admin-only').style.display=isAdmin?'block':'none';
+  document.getElementById('est-no-access').style.display=isAdmin?'none':'block';
+  if(isAdmin) buildEstPkgGrid();
+}
+
+function buildEstPkgGrid(){
+  const grid=document.getElementById('est-pkg-grid');
+  if(!grid||grid.dataset.built)return;
+  grid.dataset.built='1';
+  PKG_LIST.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='pkg-option';
+    div.dataset.key=p.key;
+    div.innerHTML=`<div class="pkg-option-name">${p.name}</div><div class="pkg-option-level">${p.level}</div>`;
+    div.onclick=()=>{
+      document.querySelectorAll('#est-pkg-grid .pkg-option').forEach(el=>el.classList.remove('selected'));
+      div.classList.add('selected');
+      estPkg=p.key;
+      const isBS=p.key.startsWith('BS-');
+      const isRP=p.key.startsWith('RP-');
+      const isRP3=p.key==='RP-3';
+      document.getElementById('est-wax-group').style.display=isBS?'block':'none';
+      document.getElementById('est-rp3-range').style.display=isRP3?'block':'none';
+      document.getElementById('est-rp-addons').style.display=isRP?'block':'none';
+      if(!isBS){estWaxOn=false;updateEstWaxUI();}
+      calcEstimate();
+    };
+    grid.appendChild(div);
+  });
+}
+
+function estSelectScope(s){
+  estScope=s;
+  document.querySelectorAll('#tab-estimate .scope-option').forEach(el=>el.classList.toggle('selected',el.dataset.scope===s));
+  calcEstimate();
+}
+
+function estToggleWax(){
+  estWaxOn=!estWaxOn;
+  updateEstWaxUI();
+  calcEstimate();
+}
+function updateEstWaxUI(){
+  const cb=document.getElementById('est-wax-cb');
+  const row=cb?.closest('.wax-toggle-row');
+  if(!cb)return;
+  if(estWaxOn){cb.classList.add('on');cb.innerHTML='<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';if(row){row.style.borderColor='var(--green)';row.style.background='var(--green-bg)';}}
+  else{cb.classList.remove('on');cb.innerHTML='';if(row){row.style.borderColor='var(--border2)';row.style.background='var(--surface)';}}
+}
+
+function estToggleAddon(key){
+  estAddons[key]=!estAddons[key];
+  const cb=document.getElementById(`est-addon-${key}-cb`);
+  const row=cb?.closest('.wax-toggle-row');
+  if(!cb)return;
+  if(estAddons[key]){cb.classList.add('on');cb.innerHTML='<svg width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';if(row){row.style.borderColor='var(--green)';row.style.background='var(--green-bg)';}}
+  else{cb.classList.remove('on');cb.innerHTML='';if(row){row.style.borderColor='var(--border2)';row.style.background='var(--surface)';}}
+  calcEstimate();
+}
+
+function calcEstimate(){
+  const size=parseFloat(document.getElementById('est-size')?.value)||0;
+  const boatType=document.getElementById('est-boat-type')?.value||'cc';
+  const resultCard=document.getElementById('est-result-card');
+  if(!estPkg||!size||!estScope){if(resultCard)resultCard.style.display='none';return;}
+
+  const rate=RATES[estPkg];
+  if(!rate)return;
+
+  // Determine base rate per ft
+  let baseRate=rate.base;
+  if(!baseRate){ // RP-3 uses slider
+    baseRate=parseInt(document.getElementById('est-rp3-slider')?.value||200);
+  }
+
+  // Boat type adjustment (only for 15-34ft boats per pricing)
+  let typeAdj=1;
+  if(size<=34){
+    if(boatType==='bay') typeAdj=0.85;
+    else if(boatType==='cat') typeAdj=1.15;
+  }
+
+  // Scope & size bracket pricing
+  // 15-34ft: 65% topside / 35% hull
+  // 35-45ft: topside = full price, hull = $15/ft
+  // 46ft+: topside = full+$15, hull = full
+  let topsideRate=0, hullRate=0;
+  if(size<=34){
+    topsideRate=baseRate*0.65*typeAdj;
+    hullRate=baseRate*0.35*typeAdj;
+  } else if(size<=45){
+    topsideRate=baseRate*typeAdj;
+    hullRate=(baseRate-15)*typeAdj;
+  } else {
+    topsideRate=baseRate*typeAdj+15;
+    hullRate=baseRate*typeAdj;
+  }
+
+  let lines=[];
+  let totalBase=0;
+
+  if(estScope==='full'){
+    const t=topsideRate*size;
+    const h=hullRate*size;
+    totalBase=t+h;
+    lines.push({label:`${rate.label} — Topside (${fmt(topsideRate)}/ft × ${size}ft)`,val:t});
+    lines.push({label:`${rate.label} — Hull (${fmt(hullRate)}/ft × ${size}ft)`,val:h});
+  } else if(estScope==='topside'){
+    totalBase=topsideRate*size;
+    lines.push({label:`${rate.label} — Topside only (${fmt(topsideRate)}/ft × ${size}ft)`,val:totalBase});
+  } else {
+    totalBase=hullRate*size;
+    lines.push({label:`${rate.label} — Hull only (${fmt(hullRate)}/ft × ${size}ft)`,val:totalBase});
+  }
+
+  // Wax addon (BS)
+  let waxTotal=0;
+  if(estPkg.startsWith('BS-')&&estWaxOn){
+    const waxFt=estScope==='topside'||estScope==='hull'?size:size;
+    waxTotal=WAX_RATE*waxFt;
+    lines.push({label:`+ Premium Boat Wax add-on ($${WAX_RATE}/ft × ${size}ft)`,val:waxTotal,accent:true});
+  }
+
+  // RP add-ons
+  let addonTotal=0;
+  const rpLevel=estPkg==='RP-1'?1:estPkg==='RP-2'?2:3;
+  if(estPkg.startsWith('RP-')&&estAddons['ceramic-gc']){
+    const r=RP_ADDON_CERAMIC_GC[rpLevel];
+    const v=r*size;
+    addonTotal+=v;
+    lines.push({label:`+ Ceramic Smooth Gel Coat ($${r}/ft × ${size}ft)`,val:v,accent:true});
+  }
+  if(estPkg.startsWith('RP-')&&estAddons['nonskid']){
+    const r=RP_ADDON_NONSKID[rpLevel];
+    const v=r*size;
+    addonTotal+=v;
+    lines.push({label:`+ Non-Skid Ceramic ($${r}/ft × ${size}ft)`,val:v,accent:true});
+  }
+
+  const total=totalBase+waxTotal+addonTotal;
+
+  // Render breakdown
+  const bd=document.getElementById('est-breakdown');
+  bd.innerHTML='';
+  lines.forEach(l=>{
+    const row=document.createElement('div');
+    row.className='est-line';
+    row.innerHTML=`<span class="est-line-label"${l.accent?' style="color:var(--amber)"':''}>${l.label}</span><span class="est-line-val"${l.accent?' style="color:var(--amber)"':''}>${fmtDollar(l.val)}</span>`;
+    bd.appendChild(row);
+  });
+
+  // Total row
+  const totalRow=document.createElement('div');
+  totalRow.className='est-total-line';
+  const isRP3=estPkg==='RP-3';
+  const totalLabel=isRP3?'Estimated total (range below)':'Total estimate';
+  totalRow.innerHTML=`<span>${totalLabel}</span><span class="est-line-val" style="color:var(--green)">${fmtDollar(total)}</span>`;
+  bd.appendChild(totalRow);
+
+  // RP-3 range
+  if(isRP3){
+    const lo=calcRP3Total(200,size,estScope,boatType,addonTotal);
+    const hi=calcRP3Total(350,size,estScope,boatType,addonTotal);
+    const rangeRow=document.createElement('div');
+    rangeRow.className='est-range-line';
+    rangeRow.innerHTML=`<span>Range at $200–$350/ft:</span><span>${fmtDollar(lo)} – ${fmtDollar(hi)}</span>`;
+    bd.appendChild(rangeRow);
+  }
+
+  document.getElementById('est-total-badge').textContent=fmtDollar(total);
+  resultCard.style.display='block';
+
+  // Store for book-job
+  resultCard.dataset.total=total;
+  resultCard.dataset.lo=isRP3?calcRP3Total(200,size,estScope,boatType,addonTotal):total;
+  resultCard.dataset.hi=isRP3?calcRP3Total(350,size,estScope,boatType,addonTotal):total;
+}
+
+function calcRP3Total(rate,size,scope,boatType,addonTotal){
+  let typeAdj=1;
+  if(size<=34){if(boatType==='bay')typeAdj=0.85;else if(boatType==='cat')typeAdj=1.15;}
+  let tr=0,hr=0;
+  if(size<=34){tr=rate*0.65*typeAdj;hr=rate*0.35*typeAdj;}
+  else if(size<=45){tr=rate*typeAdj;hr=(rate-15)*typeAdj;}
+  else{tr=rate*typeAdj+15;hr=rate*typeAdj;}
+  let base=scope==='topside'?tr*size:scope==='hull'?hr*size:(tr+hr)*size;
+  return base+addonTotal;
+}
+
+function fmt(n){return '$'+n.toFixed(0);}
+function fmtDollar(n){return '$'+Math.round(n).toLocaleString();}
+
+function copyEstimate(){
+  const client=document.getElementById('est-client')?.value.trim()||'Client';
+  const ymm=document.getElementById('est-ymm')?.value.trim()||'';
+  const size=document.getElementById('est-size')?.value||'?';
+  const boatTypeEl=document.getElementById('est-boat-type');
+  const boatTypeLabel=boatTypeEl?.options[boatTypeEl.selectedIndex]?.text||'';
+  const pkg=estPkg?RATES[estPkg]?.label:'';
+  const scope={full:'Full Vessel',topside:'Topside Only',hull:'Hull Only'}[estScope]||'';
+  const card=document.getElementById('est-result-card');
+  const total=fmtDollar(parseFloat(card?.dataset.total||0));
+  const isRP3=estPkg==='RP-3';
+  const lo=fmtDollar(parseFloat(card?.dataset.lo||0));
+  const hi=fmtDollar(parseFloat(card?.dataset.hi||0));
+  const lines=Array.from(document.querySelectorAll('#est-breakdown .est-line')).map(r=>{
+    const lbl=r.querySelector('.est-line-label')?.textContent||'';
+    const val=r.querySelector('.est-line-val')?.textContent||'';
+    return`  ${lbl}: ${val}`;
+  }).join('\n');
+  const totalLine=isRP3?`Range: ${lo} – ${hi}\nAt selected rate: ${total}`:`Total: ${total}`;
+  const boatLine=ymm?`${ymm} (${size}ft · ${boatTypeLabel})`:`${size}ft ${boatTypeLabel}`;
+  const msg=`REVIVAL MARINE CARE — ESTIMATE\n${new Date().toLocaleDateString()}\n\nClient: ${client}\nBoat: ${boatLine}\nScope: ${scope}\nPackage: ${pkg}${estWaxOn?' + Wax add-on':''}\n\nBreakdown:\n${lines}\n\n${totalLine}\n\n*This is an estimate. Final price confirmed at time of booking.`;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Quote copied — ready to send')).catch(()=>showToast('Select and copy the quote manually'));
+}
+
+// Pending job waiting for date selection from calendar
+var _pendingBooking = null;
+
+function bookJobFromEstimate(){
+  var client = document.getElementById('est-client') ? document.getElementById('est-client').value.trim() : '';
+  var ymm = document.getElementById('est-ymm') ? document.getElementById('est-ymm').value.trim() : '';
+  var size = document.getElementById('est-size') ? document.getElementById('est-size').value.trim() : '';
+  var boatTypeEl = document.getElementById('est-boat-type');
+  var boatTypeLabel = boatTypeEl ? boatTypeEl.options[boatTypeEl.selectedIndex].text : '';
+  if(!client){showToast('Enter a client name first');return;}
+  if(!size){showToast('Enter boat size first');return;}
+  if(!estPkg){showToast('Select a package first');return;}
+  if(!estScope){showToast('Select vessel scope first');return;}
+
+  var card = document.getElementById('est-result-card');
+  var quotedTotal = parseFloat(card ? card.dataset.total : 0) || null;
+
+  // Store the pending job — date will be filled when user taps calendar
+  _pendingBooking = {
+    id: uid(),
+    client: client,
+    boatSize: ymm || (size + 'ft'),
+    boatType: boatTypeLabel,
+    pkgKey: estPkg,
+    scope: estScope,
+    waxAddon: estPkg.startsWith('BS-') ? estWaxOn : false,
+    duration: 1,
+    assignedTo: [],
+    quotedPrice: quotedTotal,
+    status: 'active',
+    checked: {},
+    customItems: []
+  };
+
+  // Switch to calendar in month view with booking banner visible
+  switchTab('calendar', document.querySelectorAll('.tab-btn')[1]);
+  setTimeout(function(){
+    calShowView('month');
+    // Show booking banner
+    var banner = document.getElementById('cal-booking-banner');
+    var nameEl = document.getElementById('cal-booking-name');
+    if(banner) banner.style.display = 'block';
+    if(nameEl) {
+      var pkgLabel = RATES[estPkg] ? RATES[estPkg].label : estPkg;
+      nameEl.textContent = client + ' \u00b7 ' + (ymm || size+'ft') + ' \u00b7 ' + pkgLabel;
+    }
+  }, 60);
+}
+
+function calCancelBooking(){
+  _pendingBooking = null;
+  var banner = document.getElementById('cal-booking-banner');
+  if(banner) banner.style.display = 'none';
+  calDrawMonth();
+}
+
+function calConfirmBooking(dateStr){
+  if(!_pendingBooking) return;
+  var durEl = document.getElementById('cal-booking-duration');
+  var dur = durEl ? parseFloat(durEl.value) : 1;
+  _pendingBooking.date = dateStr;
+  _pendingBooking.duration = dur;
+  jobs.unshift(_pendingBooking);
+  saveJobs();
+  _pendingBooking = null;
+
+  // Hide banner and redraw calendar
+  var banner = document.getElementById('cal-booking-banner');
+  if(banner) banner.style.display = 'none';
+  calDrawMonth();
+  showToast('Job booked \u2713');
+}
+
+function resetEstimator(){
+  estPkg=null;estScope='full';estWaxOn=false;estAddons={};
+  document.querySelectorAll('#est-pkg-grid .pkg-option').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('#tab-estimate .scope-option').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('est-client').value='';
+  document.getElementById('est-ymm').value='';
+  document.getElementById('est-size').value='';
+  document.getElementById('est-wax-group').style.display='none';
+  document.getElementById('est-rp3-range').style.display='none';
+  document.getElementById('est-rp-addons').style.display='none';
+  document.getElementById('est-result-card').style.display='none';
+  updateEstWaxUI();
+  ['ceramic-gc','nonskid'].forEach(k=>{estAddons[k]=false;estToggleAddon(k);estAddons[k]=false;});
+}
+
+// ═══ SINGLE CANONICAL switchTab ═══
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  const tv=document.getElementById('tab-'+name);
+  if(tv)tv.classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='settings'){renderAccountsList();buildTmplPkgSelect();}
+  if(name==='calendar'){calOpenTab();}
+  if(name==='estimate'){renderEstimateTab();}
+}
+
+// ═══ SINGLE CANONICAL openJobModal ═══
+function openJobModal(editId){
+  jmMode=editId?'edit':'new';
+  jmEditId=editId||null;
+  jmSelectedPkg=null;jmSelectedScope=null;jmWaxOn=false;
+  document.querySelectorAll('.pkg-option').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('.scope-option').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('jm-wax-group').style.display='none';
+  document.querySelector('#job-modal h3').textContent=editId?'Edit job':'New job';
+  updateWaxUI();
+  let selectedCrew=[];
+  if(editId){
+    const job=jobs.find(j=>j.id===editId);
+    if(!job)return;
+    document.getElementById('jm-client').value=job.client;
+    document.getElementById('jm-boat-size').value=job.boatSize;
+    document.getElementById('jm-boat-type').value=job.boatType;
+    document.getElementById('jm-date').value=job.date;
+    document.getElementById('jm-duration').value=String(job.duration||1);
+    jmSelectedPkg=job.pkgKey;jmSelectedScope=job.scope||'full';jmWaxOn=job.waxAddon||false;
+    document.querySelector(`.pkg-option[data-key="${job.pkgKey}"]`)?.classList.add('selected');
+    document.querySelector(`.scope-option[data-scope="${jmSelectedScope}"]`)?.classList.add('selected');
+    document.getElementById('jm-wax-group').style.display=job.pkgKey.startsWith('BS-')?'block':'none';
+    updateWaxUI();
+    selectedCrew=job.assignedTo||[];
+  } else {
+    document.getElementById('jm-client').value='';
+    document.getElementById('jm-boat-size').value='';
+    document.getElementById('jm-boat-type').value='';
+    document.getElementById('jm-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('jm-duration').value='1';
+  }
+  const cg=document.getElementById('jm-crew-group');
+  if(cg)cg.style.display=currentUser&&currentUser.role==='admin'?'block':'none';
+  buildCrewList(selectedCrew);
+  document.getElementById('job-modal').classList.add('open');
+}
+
+// ═══ SINGLE CANONICAL saveJob ═══
+function saveJob(){
+  const client=document.getElementById('jm-client').value.trim();
+  const boatSize=document.getElementById('jm-boat-size').value.trim();
+  const boatType=document.getElementById('jm-boat-type').value.trim();
+  const date=document.getElementById('jm-date').value;
+  const duration=parseFloat(document.getElementById('jm-duration').value)||1;
+  const assignedTo=getSelectedCrew();
+  if(!client){showToast('Enter client name');return;}
+  if(!jmSelectedPkg){showToast('Select a package');return;}
+  if(!jmSelectedScope){showToast('Select vessel scope');return;}
+  if(jmMode==='edit'&&jmEditId){
+    const job=jobs.find(j=>j.id===jmEditId);
+    if(!job)return;
+    const pkgChanged=job.pkgKey!==jmSelectedPkg;
+    const scopeChanged=(job.scope||'full')!==jmSelectedScope;
+    job.client=client;job.boatSize=boatSize;job.boatType=boatType;
+    job.date=date;job.duration=duration;job.assignedTo=assignedTo;
+    job.pkgKey=jmSelectedPkg;job.scope=jmSelectedScope;
+    job.waxAddon=jmSelectedPkg.startsWith('BS-')?jmWaxOn:false;
+    if(pkgChanged||scopeChanged){job.checked={};job.customItems=[];showToast('Package updated — checklist reset');}
+    else showToast('Job updated');
+    saveJobs();closeJobModal();renderJobsList();renderJobDetail(job);
+  } else {
+    const quoted=window._pendingQuote||null;
+    window._pendingQuote=null;
+    const job={id:uid(),client,boatSize,boatType,pkgKey:jmSelectedPkg,scope:jmSelectedScope,waxAddon:jmSelectedPkg.startsWith('BS-')?jmWaxOn:false,date,duration,assignedTo,quotedPrice:quoted,status:'active',checked:{},customItems:[]};
+    jobs.unshift(job);
+    saveJobs();closeJobModal();renderJobsList();showToast('Job booked ✓');openJobDetail(job.id);
+  }
+}
+</script>
+</body>
+</html>
