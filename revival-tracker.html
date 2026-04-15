@@ -321,6 +321,12 @@ body{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);backgroun
       <input class="form-input" type="password" id="login-pin" placeholder="Enter your PIN" inputmode="numeric" maxlength="6"/>
     </div>
     <div class="login-err" id="login-err">Incorrect PIN. Try again.</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;margin-bottom:4px">
+      <div id="remember-toggle" onclick="toggleRememberMe()" style="width:40px;height:22px;border-radius:999px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+        <div id="remember-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
+      </div>
+      <div style="font-size:13px;color:var(--text2)">Stay signed in on this device</div>
+    </div>
     <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="doLogin()">Sign in</button>
   </div>
 </div>
@@ -336,10 +342,12 @@ body{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);backgroun
       <div class="user-pill" onclick="toggleUserDropdown()">
         <div class="user-avatar" id="header-avatar">?</div>
         <div class="user-name" id="header-name">Sign in</div>
+        <div id="notif-badge" style="display:none;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;align-items:center;justify-content:center;margin-left:2px">0</div>
         <span style="font-size:10px;opacity:.6;margin-left:2px">▾</span>
       </div>
       <div class="dropdown-menu" id="user-dropdown-menu">
         <div class="dropdown-item" onclick="openProfileEdit()"><span class="dropdown-item-icon">👤</span>Edit profile</div>
+        <div class="dropdown-item" id="notif-menu-item" onclick="openNotifications()" style="display:none"><span class="dropdown-item-icon">🔔</span>QC Notes <span id="notif-menu-count" style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px"></span></div>
         <div class="dropdown-item" onclick="goToSettings()"><span class="dropdown-item-icon">⚙</span>Settings</div>
         <div class="dropdown-item" style="color:var(--red)" onclick="doSignOut()"><span class="dropdown-item-icon">↩</span>Sign out</div>
       </div>
@@ -374,8 +382,9 @@ body{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);backgroun
       <div class="job-header-card" id="job-detail-header"></div>
       <div class="complete-banner" id="job-complete-banner">
         <div class="complete-banner-title">Detail complete!</div>
-        <div class="complete-banner-sub">All steps and post-inspection items done. Ready for client delivery.</div>
+        <div class="complete-banner-sub">All steps done. Ready for QC review.</div>
       </div>
+      <div id="job-qc-panel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px"></div>
       <div id="job-action-row" style="display:flex;gap:8px;margin-bottom:14px"></div>
       <div id="job-detail-checklist"></div>
     </div>
@@ -578,9 +587,24 @@ body{font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);backgroun
       <!-- Job popup -->
       <div id="cal-job-popup" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px;box-shadow:var(--shadow)"></div>
     </div><!-- end cal-month-view -->
+
+    <!-- QC SUMMARY STRIP -->
+    <div id="cal-qc-strip" style="margin-top:20px"></div>
+
   </div><!-- end tab-calendar -->
 
 </div><!-- end container -->
+
+<!-- NOTIFICATIONS MODAL -->
+<div class="modal-overlay" id="notif-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="margin:0">🔔 QC Notes</h3>
+      <button onclick="closeNotifications()" style="background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer">✕</button>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+</div>
 
 <!-- JOB MODAL (new + edit) -->
 <div class="modal-overlay" id="job-modal">
@@ -1523,6 +1547,21 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(
 function renderJobsList() {
   const active = jobs.filter(j=>j.status!=='complete');
   const completed = jobs.filter(j=>j.status==='complete');
+
+  // Sort active: in-progress (any steps checked) first, then by date soonest first
+  active.sort((a,b)=>{
+    const aDone = Object.values(a.checked||{}).filter(Boolean).length;
+    const bDone = Object.values(b.checked||{}).filter(Boolean).length;
+    const aInProgress = aDone > 0;
+    const bInProgress = bDone > 0;
+    if(aInProgress && !bInProgress) return -1;
+    if(!aInProgress && bInProgress) return 1;
+    return (a.date||'').localeCompare(b.date||'');
+  });
+
+  // Sort completed newest first
+  completed.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
   document.getElementById('jobs-subtitle').textContent = active.length+' job'+(active.length!==1?'s':'')+' in progress';
   const al = document.getElementById('active-jobs-list');
   al.innerHTML = '';
@@ -1542,13 +1581,39 @@ function buildJobCard(job) {
   const done = Object.values(job.checked||{}).filter(Boolean).length;
   const pct = total ? Math.round((done/total)*100) : 0;
   const isComplete = job.status==='complete';
-  const dotColor = isComplete?'var(--green)':done>0?'var(--amber)':'var(--blue)';
+  const qcStatus = job.qc ? job.qc.status : null;
+  const everFailed = job.qc && job.qc.everFailed;
+
+  // Dot color
+  const dotColor = isComplete
+    ? (qcStatus==='fail'?'var(--red)':qcStatus==='pass'?'var(--green)':'var(--green)')
+    : done>0?'var(--amber)':'var(--blue)';
+
   const scopeLabel = {full:'Full vessel',topside:'Topside only',hull:'Hull only'}[job.scope||'full']||'Full vessel';
   const waxTag = job.waxAddon?' <span style="color:var(--amber);font-size:10px;font-weight:600">+WAX</span>':'';
-  const statusPill = isComplete
-    ?'<span class="pill pill-complete">Complete</span>'
-    :done>0?'<span class="pill pill-progress">In progress</span>'
-    :'<span class="pill pill-active">Not started</span>';
+
+  // Status pills
+  let statusPill = '';
+  if(isComplete) {
+    if(qcStatus==='fail') {
+      statusPill = '<span class="pill" style="background:var(--red-bg);color:var(--red);text-decoration:line-through">Complete</span>'
+        + ' <span class="pill" style="background:var(--red-bg);color:var(--red);font-weight:700">✗ Failed</span>';
+    } else if(qcStatus==='pass' && everFailed) {
+      statusPill = '<span class="pill pill-complete">Complete</span>'
+        + ' <span class="pill" style="background:var(--red-bg);color:var(--red);font-size:10px">was failed</span>'
+        + ' <span class="pill" style="background:var(--green-bg);color:var(--green-text);font-weight:700">✓ Passed</span>';
+    } else if(qcStatus==='pass') {
+      statusPill = '<span class="pill pill-complete">Complete</span>'
+        + ' <span class="pill" style="background:var(--green-bg);color:var(--green-text);font-weight:700">✓ Passed</span>';
+    } else {
+      statusPill = '<span class="pill pill-complete">Complete</span>';
+    }
+  } else {
+    statusPill = done>0
+      ?'<span class="pill pill-progress">In progress</span>'
+      :'<span class="pill pill-active">Not started</span>';
+  }
+
   const card = document.createElement('div');
   card.className='job-card';
   card.onclick=()=>openJobDetail(job.id);
@@ -1659,6 +1724,15 @@ function renderJobDetail(job) {
 
   document.getElementById('job-complete-banner').classList.toggle('show',isComplete);
 
+  // QC panel — admin only, shown when job is complete
+  const qcPanel=document.getElementById('job-qc-panel');
+  if(isComplete && currentUser && currentUser.role==='admin'){
+    qcPanel.style.display='block';
+    renderQCPanel(job, qcPanel);
+  } else {
+    qcPanel.style.display='none';
+  }
+
   // Action row
   const ar=document.getElementById('job-action-row');
   ar.innerHTML='';
@@ -1694,48 +1768,231 @@ function renderJobDetail(job) {
   let stepIdx=0;
   steps.forEach((group,gi)=>{
     const isPost=group.group.toLowerCase().includes('post');
-    const doneInGroup=group.items.filter((_,ii)=>{
-      const key=`g${gi}i${ii}`;
-      return job.checked&&job.checked[key];
-    }).length;
+    const doneInGroup=group.items.filter((_,ii)=>job.checked&&job.checked['g'+gi+'i'+ii]).length;
     const groupDiv=document.createElement('div');
     groupDiv.className='step-group';
-    groupDiv.innerHTML=`<div class="step-group-header"><span class="step-group-name">${group.group}</span><span class="step-group-count">${doneInGroup}/${group.items.length}</span></div>`;
+    groupDiv.dataset.groupName=group.group;
+    groupDiv.innerHTML='<div class="step-group-header"><span class="step-group-name">'+group.group+'</span><span class="step-group-count">'+doneInGroup+'/'+group.items.length+'</span></div>';
 
     group.items.forEach((item,ii)=>{
-      const key=`g${gi}i${ii}`;
-      const isDone=job.checked&&job.checked[key];
+      const key='g'+gi+'i'+ii;
+      const isDone=!!(job.checked&&job.checked[key]);
       const auditInfo=job.audit&&job.audit[key];
-      const auditBadge=auditInfo?`<span class="audit-badge">${auditInfo.initials} · ${auditInfo.at}</span>`:'';
-      const row=document.createElement('div');
+      const auditBadge=auditInfo?('<span class="audit-badge">'+auditInfo.initials+' \u00b7 '+auditInfo.at+'</span>'):'';
       const customTag=item._custom?'<span class="step-custom-tag">custom</span>':'';
       const waxTag=item._wax?'<span class="step-custom-tag" style="background:var(--amber-bg);color:var(--amber)">+wax</span>':'';
 
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText='position:relative;overflow:hidden;border-radius:10px;margin-bottom:5px';
+      wrapper.dataset.groupName=group.group;
+
+      const delBack=document.createElement('div');
+      delBack.style.cssText='position:absolute;right:0;top:0;bottom:0;width:90px;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;border-radius:10px;pointer-events:none';
+      delBack.textContent='Delete';
+      wrapper.appendChild(delBack);
+
+      const row=document.createElement('div');
+      row.style.cssText='position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:8px;padding:10px;user-select:none;-webkit-user-select:none;transition:transform .1s';
+      row.dataset.groupName=group.group;
+      row.dataset.itemLabel=item.label||'';
+      row.dataset.key=key;
+
       if(isPost){
         row.className='inspect-item'+(isDone?' done':'');
-        row.innerHTML=`<div class="icb"><svg class="icb-check" width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="inspect-label">${item.label}${customTag}${waxTag}${auditBadge}</div>${item._custom&&job.status!=='complete'?`<button class="inspect-delete-btn" onclick="removeCustomItem(event,'${job.id}','${item._customId}')">✕</button>`:''}`;
+        row.innerHTML='<div class="icb" style="flex-shrink:0"><svg class="icb-check" width="11" height="11" viewBox="0 0 11 11"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+          +'<div class="inspect-label" style="flex:1;font-size:14px;line-height:1.4">'+item.label+customTag+waxTag+auditBadge+'</div>'
+          +(job.status!=='complete'?'<span class="drag-handle" style="flex-shrink:0;display:flex;flex-direction:column;gap:1px;padding:2px 4px"></span>':'');
       } else {
         stepIdx++;
         row.className='step-item'+(isDone?' done':'');
-        row.innerHTML=`<div class="step-num">${isDone?'<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,7 7.5,1.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':stepIdx}</div><div class="step-body"><div class="step-label">${item.label}${customTag}${waxTag}${auditBadge}</div>${item.product?`<div class="step-product">${item.product}</div>`:''}</div>${item._custom&&job.status!=='complete'?`<button class="step-delete-btn" onclick="removeCustomItem(event,'${job.id}','${item._customId}')">✕</button>`:''}`;
+        row.innerHTML='<div class="step-num" style="flex-shrink:0">'+(isDone?'<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1.5,4.5 3.5,7 7.5,1.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':stepIdx)+'</div>'
+          +'<div class="step-body" style="flex:1;min-width:0"><div class="step-label" style="font-size:14px;line-height:1.4">'+item.label+customTag+waxTag+auditBadge+'</div>'+(item.product?'<div class="step-product">'+item.product+'</div>':'')+'</div>'
+          +(job.status!=='complete'?'<span class="drag-handle" style="flex-shrink:0;display:flex;flex-direction:column;gap:1px;padding:2px 4px"></span>':'');
       }
 
-      if(job.status!=='complete') {
-        row.onclick=(e)=>{if(e.target.classList.contains('step-delete-btn')||e.target.classList.contains('inspect-delete-btn'))return;toggleJobStep(job.id,key);};
+      wrapper.appendChild(row);
+
+      if(job.status!=='complete'){
+        const labelEl=row.querySelector('.step-label,.inspect-label');
+        if(labelEl){
+          labelEl.style.cursor='text';
+          labelEl.onclick=(e)=>{ e.stopPropagation(); openInlineEdit(labelEl,item,job,group.group); };
+        }
+        row.onclick=(e)=>{
+          if(e.target.closest&&(e.target.closest('.drag-handle')||e.target.closest('.step-label')||e.target.closest('.inspect-label')))return;
+          if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;
+          toggleJobStep(job.id,key);
+        };
+        initSwipeDelete(wrapper,row,delBack,job,item);
       }
-      groupDiv.appendChild(row);
+      groupDiv.appendChild(wrapper);
     });
 
-    // Add custom item row per group
     if(job.status!=='complete'){
       const addRow=document.createElement('div');
       addRow.className='add-item-row';
-      addRow.innerHTML=`<input class="add-item-input" placeholder="Add item to this section..." id="add-input-g${gi}"/><button class="add-item-btn" onclick="addCustomItem('${job.id}','${group.group}','g${gi}')">Add</button>`;
+      addRow.innerHTML='<input class="add-item-input" placeholder="Add item to this section..." id="add-input-g'+gi+'"/><button class="add-item-btn" onclick="addCustomItem(\''+job.id+'\',\''+group.group+'\',\'g'+gi+'\')">Add</button>';
       groupDiv.appendChild(addRow);
     }
-
     wrap.appendChild(groupDiv);
   });
+
+  if(job.status!=='complete'){
+    wrap.querySelectorAll('.step-group').forEach(function(grpEl){ initGroupReorder(grpEl,job); });
+  }
+}
+
+function initSwipeDelete(wrapper,row,delBack,job,item){
+  var startX=0,startY=0,dx=0,active=false;
+  var threshold=80;
+  function start(x,y){startX=x;startY=y;dx=0;active=true;}
+  function move(x,y){
+    if(!active)return;
+    var ddx=startX-x,ddy=Math.abs(y-startY);
+    if(ddy>Math.abs(ddx)*1.5){active=false;row.style.transform='';return;}
+    dx=Math.max(0,Math.min(ddx,threshold+20));
+    row.style.transform='translateX(-'+dx+'px)';
+  }
+  function end(){
+    if(!active)return;active=false;
+    if(dx>=threshold){
+      row.style.transform='translateX(-100%)';
+      row.style.opacity='0';
+      setTimeout(function(){deleteItemFromJob(job,item);},220);
+    } else {
+      row.style.transform='';
+    }
+    dx=0;
+  }
+  wrapper.addEventListener('touchstart',function(e){start(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  wrapper.addEventListener('touchmove',function(e){move(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  wrapper.addEventListener('touchend',end);
+  wrapper.addEventListener('mousedown',function(e){start(e.clientX,e.clientY);});
+  document.addEventListener('mousemove',function(e){if(active)move(e.clientX,e.clientY);});
+  document.addEventListener('mouseup',function(){if(active)end();});
+}
+
+function deleteItemFromJob(job,item){
+  if(item._custom){
+    if(job.customItems)job.customItems=job.customItems.filter(ci=>ci._customId!==item._customId);
+  } else {
+    if(!job.deletedItems)job.deletedItems=[];
+    if(!job.deletedItems.includes(item.label))job.deletedItems.push(item.label);
+  }
+  saveJobs();renderJobDetail(job);showToast('Item removed');
+}
+
+function openInlineEdit(labelEl,item,job,groupName){
+  const current=item.label||'';
+  const inp=document.createElement('textarea');
+  inp.value=current;
+  inp.rows=Math.max(1,Math.ceil(current.length/40));
+  inp.style.cssText='width:100%;border:none;outline:2px solid var(--green);outline-offset:2px;border-radius:4px;background:var(--green-bg);font-size:14px;font-family:inherit;color:var(--text);padding:4px 6px;resize:none;line-height:1.4;box-sizing:border-box';
+  labelEl.innerHTML='';labelEl.appendChild(inp);
+  // Focus without selecting all — cursor goes to end
+  inp.focus();
+  inp.setSelectionRange(current.length,current.length);
+  function save(){
+    const newLabel=inp.value.trim();
+    if(newLabel&&newLabel!==current){
+      if(item._custom){
+        if(job.customItems){var ci=job.customItems.find(c=>c._customId===item._customId);if(ci)ci.label=newLabel;}
+      } else {
+        if(!job.editedItems)job.editedItems={};
+        job.editedItems[current]=newLabel;
+      }
+      saveJobs();
+    }
+    renderJobDetail(job);
+  }
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();inp.blur();}
+    if(e.key==='Escape'){e.preventDefault();renderJobDetail(job);}
+  });
+}
+
+function initGroupReorder(container,job){
+  var wrappers=Array.from(container.children).filter(function(el){return el.querySelector&&el.querySelector('.step-item,.inspect-item');});
+  wrappers.forEach(function(wrapper,idx){
+    var row=wrapper.querySelector('.step-item,.inspect-item');
+    if(!row)return;
+    var handle=row.querySelector('.drag-handle');
+    if(!handle)return;
+    handle.innerHTML='';
+    handle.style.cssText='display:flex;flex-direction:column;gap:2px;padding:2px 4px;flex-shrink:0';
+    if(idx>0){
+      var up=document.createElement('button');
+      up.textContent='\u25b2';
+      up.style.cssText='background:none;border:none;color:var(--text3);font-size:9px;cursor:pointer;padding:2px 4px;line-height:1;border-radius:3px;touch-action:manipulation';
+      up.onclick=function(e){e.stopPropagation();reorderWrapper(job,container,wrapper,-1);};
+      handle.appendChild(up);
+    }
+    if(idx<wrappers.length-1){
+      var dn=document.createElement('button');
+      dn.textContent='\u25bc';
+      dn.style.cssText='background:none;border:none;color:var(--text3);font-size:9px;cursor:pointer;padding:2px 4px;line-height:1;border-radius:3px;touch-action:manipulation';
+      dn.onclick=function(e){e.stopPropagation();reorderWrapper(job,container,wrapper,1);};
+      handle.appendChild(dn);
+    }
+    // Hold 600ms to drag
+    var holdTimer=null,dragging=false;
+    function startHold(clientY){
+      dragging=false;
+      holdTimer=setTimeout(function(){
+        dragging=true;
+        wrapper.style.boxShadow='0 8px 24px rgba(0,0,0,0.2)';
+        wrapper.style.opacity='0.6';
+        wrapper.style.zIndex='100';
+        wrapper.style.position='relative';
+        var ph=document.createElement('div');
+        ph.style.cssText='height:'+wrapper.offsetHeight+'px;border:2px dashed var(--green);border-radius:10px;margin-bottom:5px;background:var(--green-bg)';
+        container.insertBefore(ph,wrapper.nextSibling);
+        var wlist=function(){return Array.from(container.children).filter(function(el){return el.querySelector&&el.querySelector('.step-item,.inspect-item');});};
+        function onMove(y){
+          var ws=wlist();var closest=null,dist=Infinity;
+          ws.forEach(function(w){if(w===wrapper)return;var r=w.getBoundingClientRect(),mid=r.top+r.height/2,d=Math.abs(y-mid);if(d<dist){dist=d;closest={el:w,above:y<mid};}});
+          if(closest){if(closest.above)container.insertBefore(ph,closest.el);else closest.el.nextSibling?container.insertBefore(ph,closest.el.nextSibling):container.appendChild(ph);}
+        }
+        function onEnd(){
+          if(ph.parentNode){container.insertBefore(wrapper,ph);ph.parentNode.removeChild(ph);}
+          wrapper.style.boxShadow='';wrapper.style.opacity='';wrapper.style.zIndex='';wrapper.style.position='';
+          saveWrapperOrder(container,job);
+          document.removeEventListener('touchmove',onTM);document.removeEventListener('touchend',onEnd);
+          document.removeEventListener('mousemove',onMM);document.removeEventListener('mouseup',onEnd);
+        }
+        function onTM(e){onMove(e.touches[0].clientY);}
+        function onMM(e){onMove(e.clientY);}
+        document.addEventListener('touchmove',onTM,{passive:true});document.addEventListener('touchend',onEnd);
+        document.addEventListener('mousemove',onMM);document.addEventListener('mouseup',onEnd);
+      },600);
+    }
+    function cancelHold(){clearTimeout(holdTimer);dragging=false;}
+    row.addEventListener('touchstart',function(e){if(e.target.closest('.drag-handle'))return;startHold(e.touches[0].clientY);},{passive:true});
+    row.addEventListener('touchend',cancelHold);row.addEventListener('touchcancel',cancelHold);
+    row.addEventListener('mousedown',function(e){if(e.target.closest('.drag-handle'))return;startHold(e.clientY);});
+    row.addEventListener('mouseup',cancelHold);row.addEventListener('mouseleave',cancelHold);
+  });
+}
+
+function reorderWrapper(job,container,wrapper,dir){
+  var ws=Array.from(container.children).filter(function(el){return el.querySelector&&el.querySelector('.step-item,.inspect-item');});
+  var idx=ws.indexOf(wrapper);var si=idx+dir;
+  if(si<0||si>=ws.length)return;
+  var swap=ws[si];
+  if(dir===-1)container.insertBefore(wrapper,swap);
+  else swap.nextSibling?container.insertBefore(wrapper,swap.nextSibling):container.appendChild(wrapper);
+  saveWrapperOrder(container,job);
+}
+
+function saveWrapperOrder(container,job){
+  var groupName=container.dataset.groupName||'';
+  var ws=Array.from(container.children).filter(function(el){return el.querySelector&&el.querySelector('.step-item,.inspect-item');});
+  var order=ws.map(function(w){var r=w.querySelector('.step-item,.inspect-item');return r?r.dataset.itemLabel:'';}).filter(Boolean);
+  if(!job.itemOrders)job.itemOrders={};
+  if(groupName)job.itemOrders[groupName]=order;
+  saveJobs();
+  initGroupReorder(container,job);
 }
 
 function addCustomItem(jobId, groupName, inputId) {
@@ -1760,6 +2017,200 @@ function removeCustomItem(e, jobId, customId) {
   saveJobs();
   renderJobDetail(job);
   showToast('Item removed');
+}
+
+// ═══════════════════════════════════════════
+// QC REVIEW — Pass / Fail system
+// ═══════════════════════════════════════════
+function renderQCPanel(job, panel) {
+  window._qcJobId = job.id; // store for button handlers
+  var qc = job.qc || {};
+  var status = qc.status || null;
+  var notes = qc.notes || '';
+  var taggedCrew = qc.taggedCrew || [];
+  var everFailed = qc.everFailed || false;
+  var notified = qc.notifiedAt || null;
+
+  var crewChips = accounts.filter(function(a){ return a.role!=='admin'; }).map(function(a){
+    var sel = taggedCrew.includes(a.id);
+    return '<div onclick="qcToggleCrewCurrent(\''+a.id+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1.5px solid '+(sel?a.color:'var(--border2)')+';background:'+(sel?a.color+'18':'var(--surface)')+';cursor:pointer;margin-bottom:6px">'
+      +'<div style="width:26px;height:26px;border-radius:50%;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">'+a.initials+'</div>'
+      +'<div style="font-size:13px;font-weight:'+(sel?'600':'400')+';color:'+(sel?a.color:'var(--text2)')+'">'+a.name+'</div>'
+      +(sel?'<div style="margin-left:auto;font-size:11px;font-weight:700;color:'+a.color+'">&#10003;</div>':'')
+      +'</div>';
+  }).join('');
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--text)">QC Review</div>';
+
+  if(!status) {
+    html += '</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button onclick="qcMarkFail(window._qcJobId)" style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:14px;font-weight:700;cursor:pointer">&#10007; Mark Failed</button>'
+      +'<button onclick="qcMarkPass(window._qcJobId)" style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:14px;font-weight:700;cursor:pointer">&#10003; Mark Passed</button>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:8px">First-time pass = green column. Any fail = permanently in failed records.</div>';
+
+  } else if(status==='fail') {
+    html += '<div style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--red-bg);color:var(--red)">FAILED</div>'
+      +'</div>';
+
+    if(notified) {
+      html += '<div style="background:var(--red-bg);border-radius:10px;padding:12px 14px;margin-bottom:10px">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'
+        +'<div style="flex:1">'
+        +'<div style="font-size:12px;font-weight:600;color:var(--red-text);margin-bottom:4px">Notes sent '+notified+'</div>'
+        +(notes?'<div style="font-size:12px;color:var(--red-text);line-height:1.4;opacity:.9">'+notes+'</div>':'<div style="font-size:12px;color:var(--red-text);opacity:.6">No notes added.</div>')
+        +'</div>'
+        +'<button onclick="qcExpandNotesCurrent()" style="background:none;border:1.5px solid var(--red);border-radius:8px;color:var(--red);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;flex-shrink:0">Edit</button>'
+        +'</div>'
+        +'</div>'
+        +'<button onclick="qcMarkPassAfterFail(window._qcJobId)" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">&#10003; Mark Passed (after fix)</button>';
+    } else {
+      html += '<div style="background:var(--red-bg);border-radius:10px;padding:12px 14px;margin-bottom:12px">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px">Add notes about what was missed:</div>'
+        +'<textarea id="qc-notes-current" placeholder="Describe what needs to be fixed..." style="width:100%;border:1.5px solid rgba(226,75,74,.3);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;resize:none;min-height:80px;box-sizing:border-box">'+notes+'</textarea>'
+        +'</div>'
+        +'<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Tag crew to notify</div>'
+        +(crewChips||'<div style="font-size:13px;color:var(--text2);margin-bottom:12px">No crew members added.</div>')
+        +'<button onclick="qcSendNotificationCurrent()" style="width:100%;margin-top:4px;padding:12px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">Save Notes &amp; Notify Crew</button>'
+        +'<div style="border-top:1px solid rgba(226,75,74,.2);padding-top:12px">'
+        +'<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Once crew fixes the issues:</div>'
+        +'<button onclick="qcMarkPassAfterFail(window._qcJobId)" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">&#10003; Mark Passed (after fix)</button>'
+        +'</div>';
+    }
+
+  } else if(status==='pass') {
+    html += '</div>'
+      +'<div style="font-size:13px;color:var(--green-text);background:var(--green-bg);border-radius:10px;padding:12px 14px">'
+      +(everFailed
+        ?'&#10003; Passed after fix &mdash; still counted in failed records.<br><span style="font-size:11px;opacity:.7">Passed '+qc.passedAt+'</span>'
+        :'&#10003; First-time pass &mdash; counted in the Passed column.<br><span style="font-size:11px;opacity:.7">Passed '+qc.passedAt+'</span>')
+      +'</div>';
+  }
+
+  panel.innerHTML = html;
+}
+
+// Helpers that use window._qcJobId so we avoid inline job.id string escaping
+function qcToggleCrewCurrent(crewId){ qcToggleCrew(window._qcJobId, crewId); }
+function qcSendNotificationCurrent(){
+  var inp=document.getElementById('qc-notes-current');
+  if(inp){
+    var job=jobs.find(function(j){return j.id===window._qcJobId;});
+    if(job&&job.qc) job.qc.notes=inp.value.trim();
+  }
+  qcSendNotification(window._qcJobId);
+}
+function qcExpandNotesCurrent(){
+  var job=jobs.find(function(j){return j.id===window._qcJobId;});
+  if(!job||!job.qc)return;
+  var saved=job.qc.notifiedAt;
+  job.qc.notifiedAt=null;
+  var panel=document.getElementById('job-qc-panel');
+  if(panel) renderQCPanel(job,panel);
+  job.qc.notifiedAt=saved;
+}
+
+
+function qcMarkFail(jobId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job)return;
+  if(!job.qc)job.qc={};
+  job.qc.status='fail';
+  job.qc.everFailed=true;
+  job.qc.failedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  saveJobs();
+  renderJobDetail(job);
+  renderJobsList();
+  renderQCSummary();
+  showToast('Marked as failed');
+}
+
+function qcMarkPass(jobId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job)return;
+  if(!job.qc)job.qc={};
+  job.qc.status='pass';
+  job.qc.passedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  // everFailed stays false — this is a clean first-pass
+  saveJobs();
+  renderJobDetail(job);
+  renderJobsList();
+}
+
+function qcMarkPassAfterFail(jobId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job)return;
+  // Save notes first
+  var inp=document.getElementById('qc-notes-'+jobId);
+  if(inp&&job.qc)job.qc.notes=inp.value.trim();
+  if(!job.qc)job.qc={};
+  job.qc.status='pass';
+  job.qc.everFailed=true; // still failed historically
+  job.qc.passedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  saveJobs();
+  renderJobDetail(job);
+  renderJobsList();
+  showToast('Marked passed — still counted in failed records');
+}
+
+function qcSaveNotes(jobId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job)return;
+  var inp=document.getElementById('qc-notes-'+jobId);
+  if(!inp)return;
+  if(!job.qc)job.qc={};
+  job.qc.notes=inp.value.trim();
+  saveJobs();
+}
+
+function qcToggleCrew(jobId, crewId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job)return;
+  if(!job.qc)job.qc={};
+  if(!job.qc.taggedCrew)job.qc.taggedCrew=[];
+  var idx=job.qc.taggedCrew.indexOf(crewId);
+  if(idx>=0)job.qc.taggedCrew.splice(idx,1);
+  else job.qc.taggedCrew.push(crewId);
+  // Save notes before re-render
+  var inp=document.getElementById('qc-notes-'+jobId);
+  if(inp)job.qc.notes=inp.value.trim();
+  saveJobs();
+  var panel=document.getElementById('job-qc-panel');
+  if(panel)renderQCPanel(job,panel);
+}
+
+function qcSendNotification(jobId) {
+  var job=jobs.find(function(j){return j.id===jobId;});
+  if(!job||!job.qc)return;
+  var inp=document.getElementById('qc-notes-'+jobId);
+  if(inp)job.qc.notes=inp.value.trim();
+  job.qc.notifiedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  job.qc.notifiedBy=currentUser?currentUser.name:'Admin';
+  // Send to tagged crew if any
+  if(job.qc.taggedCrew&&job.qc.taggedCrew.length){
+    job.qc.taggedCrew.forEach(function(crewId){
+      var crew=accounts.find(function(a){return a.id===crewId;});
+      if(!crew)return;
+      if(!crew.notifications)crew.notifications=[];
+      crew.notifications.unshift({
+        id:uid(),type:'qc_fail',jobId:job.id,
+        client:job.client,boatSize:job.boatSize,
+        notes:job.qc.notes,
+        from:currentUser?currentUser.name:'Admin',
+        at:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})
+      });
+    });
+    saveAccounts();
+    showToast('Notes saved \u2014 crew notified');
+  } else {
+    showToast('Notes saved');
+  }
+  saveJobs();
+  renderQCSummary();
+  var panel=document.getElementById('job-qc-panel');
+  if(panel)renderQCPanel(job,panel);
 }
 
 function markJobComplete(id) {
@@ -1946,6 +2397,21 @@ function populateLoginSelect() {
   });
 }
 
+let rememberMe = false;
+
+function toggleRememberMe() {
+  rememberMe = !rememberMe;
+  const toggle = document.getElementById('remember-toggle');
+  const knob = document.getElementById('remember-knob');
+  if(rememberMe) {
+    toggle.style.background = 'var(--green)';
+    knob.style.left = '20px';
+  } else {
+    toggle.style.background = 'var(--border2)';
+    knob.style.left = '2px';
+  }
+}
+
 function doLogin() {
   const userId = document.getElementById('login-user-select').value;
   const pin = document.getElementById('login-pin').value;
@@ -1958,6 +2424,11 @@ function doLogin() {
   }
   err.style.display='none';
   currentUser = acct;
+  if(rememberMe) {
+    localStorage.setItem('rmc_saved_user', JSON.stringify({id: acct.id, pin: acct.pin}));
+  } else {
+    localStorage.removeItem('rmc_saved_user');
+  }
   document.getElementById('login-screen').style.display='none';
   updateHeaderUser();
   renderAccountsList();
@@ -1965,10 +2436,77 @@ function doLogin() {
 
 function doSignOut() {
   currentUser = null;
+  localStorage.removeItem('rmc_saved_user');
+  rememberMe = false;
+  const toggle = document.getElementById('remember-toggle');
+  const knob = document.getElementById('remember-knob');
+  if(toggle) { toggle.style.background = 'var(--border2)'; }
+  if(knob) { knob.style.left = '2px'; }
   document.getElementById('login-pin').value='';
   document.getElementById('login-user-select').value='';
   document.getElementById('login-err').style.display='none';
   document.getElementById('login-screen').style.display='flex';
+}
+
+function updateNotifUI() {
+  if(!currentUser) return;
+  var unread = (currentUser.notifications||[]).filter(function(n){return !n.read;}).length;
+  var badge = document.getElementById('notif-badge');
+  var menuItem = document.getElementById('notif-menu-item');
+  var menuCount = document.getElementById('notif-menu-count');
+  // Show notifications for crew only (admins post them, not receive them)
+  var isCrew = currentUser.role !== 'admin';
+  if(badge) badge.style.display = isCrew && unread > 0 ? 'flex' : 'none';
+  if(badge) badge.textContent = unread;
+  if(menuItem) menuItem.style.display = isCrew ? 'flex' : 'none';
+  if(menuCount) menuCount.textContent = unread > 0 ? unread : '';
+}
+
+function openNotifications() {
+  document.getElementById('user-dropdown-menu').classList.remove('open');
+  if(!currentUser || !currentUser.notifications) return;
+  var list = document.getElementById('notif-list');
+  // Mark all as read
+  currentUser.notifications.forEach(function(n){ n.read = true; });
+  saveAccounts();
+  updateNotifUI();
+
+  if(!currentUser.notifications.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px 0;color:var(--text2);font-size:14px">No QC notes yet.</div>';
+  } else {
+    list.innerHTML = '';
+    currentUser.notifications.forEach(function(n) {
+      var card = document.createElement('div');
+      card.style.cssText = 'border:1.5px solid var(--red-bg);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--red-bg)';
+      card.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--red)">✗ QC Fail Note</div>'
+        + '<div style="font-size:11px;color:var(--text3)">' + n.at + ' · from ' + n.from + '</div>'
+        + '</div>'
+        + '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">' + n.client + ' — ' + (n.boatSize||'') + '</div>'
+        + '<div style="font-size:13px;color:var(--text2);line-height:1.5">' + (n.notes||'No notes added.') + '</div>';
+      list.appendChild(card);
+    });
+  }
+  document.getElementById('notif-modal').classList.add('open');
+}
+
+function closeNotifications() {
+  document.getElementById('notif-modal').classList.remove('open');
+}
+
+function tryAutoLogin() {
+  try {
+    const saved = localStorage.getItem('rmc_saved_user');
+    if(!saved) return false;
+    const {id, pin} = JSON.parse(saved);
+    const acct = accounts.find(a=>a.id===id && a.pin===pin);
+    if(!acct) { localStorage.removeItem('rmc_saved_user'); return false; }
+    currentUser = acct;
+    document.getElementById('login-screen').style.display='none';
+    updateHeaderUser();
+    renderAccountsList();
+    return true;
+  } catch(e) { return false; }
 }
 
 function updateHeaderUser() {
@@ -1976,6 +2514,7 @@ function updateHeaderUser() {
   document.getElementById('header-avatar').textContent = currentUser.initials;
   document.getElementById('header-avatar').style.background = currentUser.color+'44';
   document.getElementById('header-name').textContent = currentUser.name.split(' ')[0];
+  updateNotifUI();
 }
 
 // ═══ ACCOUNTS SETTINGS ═══
@@ -2235,6 +2774,45 @@ function buildEffectiveSteps(job) {
       if(gi>=0)steps[gi].items.push({...ci,_custom:true});
     });
   }
+
+  // Filter out items deleted on this specific job
+  if(job.deletedItems&&job.deletedItems.length){
+    steps=steps.map(function(group){
+      return {...group, items:group.items.filter(function(it){ return !job.deletedItems.includes(it.label); })};
+    });
+  }
+
+  // Apply inline edits made on this specific job
+  if(job.editedItems){
+    steps=steps.map(function(group){
+      return {...group, items:group.items.map(function(it){
+        return job.editedItems[it.label]?{...it,label:job.editedItems[it.label]}:it;
+      })};
+    });
+  }
+
+  // Apply saved reorder per group (matched by label)
+  if(job.itemOrders) {
+    steps = steps.map(function(group) {
+      var order = job.itemOrders[group.group];
+      if(!order || !order.length) return group;
+      var reordered = [];
+      var remaining = group.items.slice();
+      order.forEach(function(label) {
+        var idx = remaining.findIndex(function(it) {
+          return it.label && it.label.trim() === label.trim();
+        });
+        if(idx >= 0) {
+          reordered.push(remaining[idx]);
+          remaining.splice(idx, 1);
+        }
+      });
+      // Append any items not found in saved order (new items added after reorder)
+      remaining.forEach(function(it) { reordered.push(it); });
+      return {...group, items: reordered.length ? reordered : group.items};
+    });
+  }
+
   return steps;
 }
 
@@ -2262,7 +2840,9 @@ populateLoginSelect();
 buildPkgGrid();
 renderJobsList();
 renderAccountsList();
-document.getElementById('login-screen').style.display='flex';
+if(!tryAutoLogin()) {
+  document.getElementById('login-screen').style.display='flex';
+}
 
 // ═══ FIREBASE REAL-TIME SYNC ═══
 (function initFirebase() {
@@ -2311,6 +2891,7 @@ document.getElementById('login-screen').style.display='flex';
           jobs = data.jobs;
           localStorage.setItem('rmc_jobs_v2', JSON.stringify(jobs));
           renderJobsList();
+          renderQCSummary();
           // If viewing a job detail, refresh it
           if(currentJobId) {
             var j = jobs.find(function(x){return x.id===currentJobId;});
@@ -2392,6 +2973,7 @@ document.getElementById('login-screen').style.display='flex';
 document.getElementById('job-modal').addEventListener('click',function(e){if(e.target===this)closeJobModal();});
 document.getElementById('add-account-modal').addEventListener('click',function(e){if(e.target===this)closeAddAccountModal();});
 document.getElementById('profile-modal').addEventListener('click',function(e){if(e.target===this)closeProfileModal();});
+document.getElementById('notif-modal').addEventListener('click',function(e){if(e.target===this)closeNotifications();});
 document.getElementById('login-pin').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.addEventListener('click',function(e){
   const wrap=document.getElementById('user-dropdown-wrap');
@@ -2402,12 +2984,83 @@ document.addEventListener('click',function(e){
 function toggleUserDropdown(){document.getElementById('user-dropdown-menu').classList.toggle('open');}
 function goToSettings(){
   document.getElementById('user-dropdown-menu').classList.remove('open');
-  // Settings is a hidden tab — clear all tab buttons, switch view only
   document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tab-view').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-settings').classList.add('active');
   renderAccountsList();
   buildTmplPkgSelect();
+}
+
+function renderQCSummary() {
+  var panel = document.getElementById('cal-qc-strip');
+  if(!panel) return;
+
+  // Count ALL jobs that have ever been failed (regardless of complete status)
+  var allFailed = jobs.filter(function(j){ return j.qc && j.qc.everFailed; });
+  // First-time passes: completed, passed, never failed
+  var firstPass = jobs.filter(function(j){ return j.status==='complete' && j.qc && j.qc.status==='pass' && !j.qc.everFailed; });
+  // Pending QC: completed but no QC decision yet
+  var pending = jobs.filter(function(j){ return j.status==='complete' && (!j.qc || !j.qc.status); });
+  var completed = jobs.filter(function(j){ return j.status==='complete'; });
+
+  if(!completed.length && !allFailed.length) { panel.innerHTML=''; return; }
+
+  var total = completed.length;
+  var passRate = total>0 ? Math.round((firstPass.length/total)*100) : 0;
+  var rateColor = passRate>=80?'var(--green)':passRate>=60?'var(--amber)':'var(--red)';
+
+  var html = '<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">'
+    +'<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">QC Report</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">'
+    +'<div style="background:var(--green-bg);border-radius:10px;padding:12px 8px;text-align:center">'
+      +'<div style="font-size:28px;font-weight:800;color:var(--green)">'+firstPass.length+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:var(--green-text);margin-top:2px;letter-spacing:.04em">PASSED</div>'
+    +'</div>'
+    +'<div style="background:var(--red-bg);border-radius:10px;padding:12px 8px;text-align:center">'
+      +'<div style="font-size:28px;font-weight:800;color:var(--red)">'+allFailed.length+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:var(--red-text);margin-top:2px;letter-spacing:.04em">FAILED</div>'
+    +'</div>'
+    +'<div style="background:var(--amber-bg);border-radius:10px;padding:12px 8px;text-align:center">'
+      +'<div style="font-size:28px;font-weight:800;color:var(--amber)">'+pending.length+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:var(--amber);margin-top:2px;letter-spacing:.04em">PENDING</div>'
+    +'</div>'
+    +'</div>';
+
+  if(total>0){
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--text)">First-pass rate</span>'
+      +'<span style="font-size:15px;font-weight:800;color:'+rateColor+'">'+passRate+'%</span>'
+      +'</div>'
+      +'<div style="height:10px;border-radius:999px;background:var(--surface2)">'
+      +'<div style="height:100%;width:'+passRate+'%;background:'+rateColor+';border-radius:999px;transition:width .4s"></div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:6px">'+firstPass.length+' first-pass · '+allFailed.length+' failed · '+pending.length+' awaiting review</div>'
+      +'</div>';
+  }
+
+  if(allFailed.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px">Failed jobs</div>';
+    allFailed.slice().reverse().forEach(function(j){
+      var d=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+      var fixedBadge=j.qc&&j.qc.status==='pass'
+        ?'<span style="display:inline-block;font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);padding:2px 7px;border-radius:999px;margin-left:6px">Fixed</span>'
+        :'<span style="display:inline-block;font-size:10px;font-weight:700;color:var(--red);background:var(--red-bg);padding:2px 7px;border-radius:999px;margin-left:6px">Outstanding</span>';
+      html+='<div style="background:var(--surface);border:1.5px solid rgba(226,75,74,.25);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer" '
+        +'onclick="switchTab(\'jobs\',document.querySelectorAll(\'.tab-btn\')[0]);setTimeout(function(){openJobDetail(\''+j.id+'\');},60)">'
+        +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">'
+        +'<span style="font-size:13px;font-weight:600;color:var(--text)">'+j.client+'</span>'
+        +'<span style="font-size:12px;color:var(--text2)">— '+(j.boatSize||'')+'</span>'
+        +fixedBadge
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--text3);margin-top:3px">'+d+(j.qc&&j.qc.failedAt?' · Failed '+j.qc.failedAt:'')+'</div>'
+        +(j.qc&&j.qc.notes?'<div style="font-size:12px;color:var(--red-text);margin-top:6px;line-height:1.4;border-left:2px solid var(--red);padding-left:8px">'+j.qc.notes+'</div>':'')
+        +'</div>';
+    });
+  }
+
+  html += '</div>';
+  panel.innerHTML = html;
 }
 function openProfileEdit(){
   document.getElementById('user-dropdown-menu').classList.remove('open');
@@ -2490,17 +3143,17 @@ function calShowView(v) {
 }
 
 function calOpenTab() {
-  // Always reset to list view when opening calendar
   calCurrentView = 'list';
-  const listEl = document.getElementById('cal-list-view');
-  const monthEl = document.getElementById('cal-month-view');
+  var listEl = document.getElementById('cal-list-view');
+  var monthEl = document.getElementById('cal-month-view');
   if (listEl) listEl.style.display = 'block';
   if (monthEl) monthEl.style.display = 'none';
-  const btnList = document.getElementById('cal-view-list');
-  const btnMonth = document.getElementById('cal-view-month');
+  var btnList = document.getElementById('cal-view-list');
+  var btnMonth = document.getElementById('cal-view-month');
   if (btnList) { btnList.style.background = 'var(--text)'; btnList.style.color = '#fff'; }
   if (btnMonth) { btnMonth.style.background = 'var(--surface2)'; btnMonth.style.color = 'var(--text2)'; }
   calDrawList();
+  renderQCSummary();
 }
 
 function calGetVisibleJobs() {
